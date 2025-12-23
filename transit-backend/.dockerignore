@@ -1,0 +1,36 @@
+# Docker Infrastructure Files
+.env
+.env.local
+.env.*.local
+
+# Build artifacts
+server
+coverage.out
+coverage.html
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Go
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+*.log
