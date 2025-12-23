@@ -2,7 +2,6 @@ package database
 
 import (
 	"context"
-	"transit-backend/internal/models"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -16,12 +15,12 @@ func NewTripRepository(db *pgxpool.Pool) *TripRepository {
 }
 
 type TripWithLocation struct {
-	TripID      string
-	DeviceID    string
-	DeviceName  string // In a real app we'd join with devices table
-	Latitude    float64
-	Longitude   float64
-	Speed       float64
+	TripID     string
+	DeviceID   string
+	DeviceName string // In a real app we'd join with devices table
+	Latitude   float64
+	Longitude  float64
+	Speed      float64
 }
 
 func (r *TripRepository) GetActiveTripsBeforeStop(ctx context.Context, stopSequence int) ([]TripWithLocation, error) {
