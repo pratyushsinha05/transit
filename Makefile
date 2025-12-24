@@ -26,14 +26,15 @@ IMAGE_TAG := latest
 REGISTRY := localhost
 
 # Paths
-BACKEND_DIR := .
-MIGRATIONS_DIR := ./migrations
-CMD_SERVER := ./cmd/server
+# Paths
+BACKEND_DIR := ./backend
+MIGRATIONS_DIR := $(BACKEND_DIR)/migrations
+CMD_SERVER := $(BACKEND_DIR)/cmd/server
 
 # Docker Compose
-DOCKER_COMPOSE_FILE := docker-compose.yml
+DOCKER_COMPOSE_FILE := ./infra/docker-compose.yml
 # Auto-detect Docker Compose command (v2 or v1)
-DOCKER_COMPOSE_CMD := $(shell docker compose version >/dev/null 2>&1 && echo "docker compose" || echo "docker-compose")
+DOCKER_COMPOSE_CMD := docker-compose
 
 # Database Configuration
 DB_USER := transit_user
@@ -178,20 +179,20 @@ verify-setup: check-deps ## Comprehensive environment verification with all vers
 # Check Go module dependencies
 check-go-deps: ## Verify Go module integrity
 	@echo "$(BLUE)Checking Go module dependencies...$(NC)"
-	go mod verify
+	cd $(BACKEND_DIR) && go mod verify
 	@echo "$(GREEN)✓ Go dependencies verified$(NC)"
 
 # Install/download Go dependencies
 install-go-deps: ## Download all Go dependencies
 	@echo "$(BLUE)Installing Go dependencies...$(NC)"
-	go mod download
-	go mod tidy
+	cd $(BACKEND_DIR) && go mod download
+	cd $(BACKEND_DIR) && go mod tidy
 	@echo "$(GREEN)✓ Go dependencies installed$(NC)"
 
 # Verify Go dependency versions
 verify-go-deps: ## Show all Go dependency versions
 	@echo "$(BLUE)Go Dependencies:$(NC)"
-	@go list -m all | grep -E "github.com/(labstack|gorilla|jackc|lib|redis|uber|joho)" | while read dep version; do \
+	@cd $(BACKEND_DIR) && go list -m all | grep -E "github.com/(labstack|gorilla|jackc|lib|redis|uber|joho)" | while read dep version; do \
 		echo "  ✓ $$dep $$version"; \
 	done
 
@@ -270,11 +271,11 @@ build-docker: check-docker ## Build Docker image (multi-stage: 15-20MB)
 	@echo "  Stage 2: alpine:latest (runtime)"
 	docker build \
 		-t $(IMAGE_NAME):$(IMAGE_TAG) \
-		-f Dockerfile \
+		-f $(BACKEND_DIR)/Dockerfile \
 		--build-arg VERSION=$(VERSION) \
 		--build-arg BUILD_TIME=$(BUILD_TIME) \
 		--build-arg GIT_HASH=$(GIT_HASH) \
-		.
+		$(BACKEND_DIR)
 	@echo ""
 	@echo "$(GREEN)✓ Docker image built: $(IMAGE_NAME):$(IMAGE_TAG)$(NC)"
 	@docker images | grep $(IMAGE_NAME) | head -1 | awk '{printf "  Size: %s\n", $$7}'
@@ -282,8 +283,8 @@ build-docker: check-docker ## Build Docker image (multi-stage: 15-20MB)
 # Build production binary locally
 build-prod: check-go ## Build production binary (optimized, stripped)
 	@echo "$(BLUE)Building production binary...$(NC)"
-	CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build \
-		-o server \
+	cd $(BACKEND_DIR) && CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build \
+		-o ../server \
 		-ldflags="-s -w -X main.Version=$(VERSION) -X main.BuildTime=$(BUILD_TIME) -X main.GitHash=$(GIT_HASH)" \
 		./cmd/server
 	@echo "$(GREEN)✓ Production binary built: server$(NC)"
@@ -292,8 +293,8 @@ build-prod: check-go ## Build production binary (optimized, stripped)
 # Build debug binary locally
 build: check-go ## Build debug binary
 	@echo "$(BLUE)Building debug binary...$(NC)"
-	go build $(GO_BUILD_FLAGS) \
-		-o server \
+	cd $(BACKEND_DIR) && go build $(GO_BUILD_FLAGS) \
+		-o ../server \
 		-ldflags="-X main.Version=$(VERSION) -X main.BuildTime=$(BUILD_TIME) -X main.GitHash=$(GIT_HASH)" \
 		./cmd/server
 	@echo "$(GREEN)✓ Binary built: server$(NC)"
@@ -517,38 +518,38 @@ db-info: ## Show database connection information
 # Run all tests
 test: check-go ## Run all tests
 	@echo "$(BLUE)Running tests...$(NC)"
-	go test $(GO_TEST_FLAGS) ./...
+	cd $(BACKEND_DIR) && go test $(GO_TEST_FLAGS) ./...
 	@echo "$(GREEN)✓ Tests passed$(NC)"
 
 # Run unit tests only
 test-unit: check-go ## Run unit tests only (fast)
 	@echo "$(BLUE)Running unit tests...$(NC)"
-	go test $(GO_TEST_FLAGS) -short ./...
+	cd $(BACKEND_DIR) && go test $(GO_TEST_FLAGS) -short ./...
 	@echo "$(GREEN)✓ Unit tests passed$(NC)"
 
 # Run integration tests
 test-integration: check-go ## Run integration tests (requires test DB)
 	@echo "$(BLUE)Running integration tests...$(NC)"
-	go test $(GO_TEST_FLAGS) -run Integration ./...
+	cd $(BACKEND_DIR) && go test $(GO_TEST_FLAGS) -run Integration ./...
 	@echo "$(GREEN)✓ Integration tests passed$(NC)"
 
 # Generate coverage report
 test-coverage: check-go ## Generate test coverage report
 	@echo "$(BLUE)Generating coverage report...$(NC)"
-	go test -coverprofile=coverage.out $(GO_TEST_FLAGS) ./...
-	go tool cover -html=coverage.out -o coverage.html
+	cd $(BACKEND_DIR) && go test -coverprofile=coverage.out $(GO_TEST_FLAGS) ./...
+	cd $(BACKEND_DIR) && go tool cover -html=coverage.out -o ../coverage.html
 	@echo "$(GREEN)✓ Coverage report: coverage.html$(NC)"
 
 # Format code
 fmt: ## Format Go code
 	@echo "$(BLUE)Formatting code...$(NC)"
-	go fmt ./...
+	cd $(BACKEND_DIR) && go fmt ./...
 	@echo "$(GREEN)✓ Code formatted$(NC)"
 
 # Run go vet
 vet: ## Run go vet analysis
 	@echo "$(BLUE)Running go vet...$(NC)"
-	go vet ./...
+	cd $(BACKEND_DIR) && go vet ./...
 	@echo "$(GREEN)✓ No issues found$(NC)"
 
 # Run linters
@@ -559,7 +560,7 @@ lint: ## Run golangci-lint (requires installation)
 		exit 1; \
 	fi
 	@echo "$(BLUE)Running linters...$(NC)"
-	golangci-lint run ./...
+	cd $(BACKEND_DIR) && golangci-lint run ./...
 	@echo "$(GREEN)✓ Linting passed$(NC)"
 
 # Run backend binary
@@ -570,7 +571,7 @@ run: build ## Run backend binary locally
 # Run dev locally
 dev: ## Run backend with go run (requires DB/Redis)
 	@echo "$(BLUE)Starting backend...$(NC)"
-	go run ./cmd/server
+	cd $(BACKEND_DIR) && go run ./cmd/server
 
 # Run with Docker (attached mode for debugging)
 dev-docker: ## Run entire stack in Docker (attached mode)
