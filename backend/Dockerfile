@@ -25,7 +25,7 @@ COPY . .
 
 # Build the application with optimizations
 # CGO_ENABLED=1 required for h3-go
-RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build \
+RUN CGO_ENABLED=1 go build \
     -ldflags="-s -w \
     -X main.Version=${VERSION} \
     -X main.BuildTime=${BUILD_TIME} \
@@ -60,7 +60,7 @@ COPY --from=builder /app/server /app/server
 COPY --from=builder /app/migrations /app/migrations
 
 # Copy public assets if they exist
-COPY --from=builder /app/public /app/public 2>/dev/null || true
+COPY --from=builder /app/public /app/public
 
 # Set ownership
 RUN chown -R appuser:appgroup /app
