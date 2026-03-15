@@ -1,4 +1,4 @@
--- Migration 004: Seed sample data
+    -- Migration 004: Seed sample data
 -- This migration adds sample routes, stops, and devices for testing
 
 -- ============================================
