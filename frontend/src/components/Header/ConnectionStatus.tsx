@@ -1,12 +1,10 @@
 /**
  * Connection Status
- * Shows backend health and WebSocket connection state
+ * Dark HUD chip showing backend health and WebSocket connection state
  */
 
 import { useHealthCheck } from '../../hooks/useHealthCheck';
 import { useWebSocket } from '../../hooks/useWebSocket';
-import clsx from 'clsx';
-import { Wifi, WifiOff, Activity } from 'lucide-react';
 
 export const ConnectionStatus = () => {
     const health = useHealthCheck();
@@ -16,24 +14,35 @@ export const ConnectionStatus = () => {
     const isConnected = connection.status === 'connected';
 
     return (
-        <div className="flex items-center gap-4 text-sm bg-white/90 backdrop-blur px-3 py-1.5 rounded-full shadow-sm border border-gray-200">
+        <div
+            className="flex items-center gap-3 text-[10px] font-mono px-3 py-1.5 border border-hud-border bg-hud-bg/90 backdrop-blur-sm"
+            style={{
+                boxShadow: '0 0 8px rgba(0,0,0,0.4), 0 0 1px rgba(0, 245, 212, 0.1)',
+            }}
+        >
             {/* WS Status */}
             <div className="flex items-center gap-1.5" title={`WebSocket: ${connection.status}`}>
-                {isConnected ? (
-                    <Wifi className="w-4 h-4 text-green-500" />
-                ) : (
-                    <WifiOff className="w-4 h-4 text-red-500" />
-                )}
-                <span className={clsx('hidden md:inline', isConnected ? 'text-green-700' : 'text-red-600')}>
-                    {isConnected ? 'Real-time' : 'Offline'}
+                <span
+                    className={`w-1.5 h-1.5 rounded-full ${isConnected ? 'bg-hud-accent animate-blink' : 'bg-hud-danger'}`}
+                ></span>
+                <span
+                    className="tracking-hud uppercase font-bold"
+                    style={{ color: isConnected ? '#00f5d4' : '#ff3860' }}
+                >
+                    {isConnected ? 'LINK' : 'NO LINK'}
                 </span>
             </div>
 
+            {/* Separator */}
+            <div className="w-px h-3 bg-hud-border"></div>
+
             {/* Backend Health */}
-            <div className="flex items-center gap-1.5 border-l pl-4" title={`Last check: ${health.lastCheck.toLocaleTimeString()}`}>
-                <Activity className={clsx('w-4 h-4', isHealthy ? 'text-green-500' : 'text-yellow-500')} />
-                <span className="hidden md:inline font-mono text-xs text-gray-500">
-                    {health.uptime > 0 ? `${Math.floor(health.uptime / 60)}m uptime` : 'Checking...'}
+            <div className="flex items-center gap-1.5" title={`Last check: ${health.lastCheck.toLocaleTimeString()}`}>
+                <span
+                    className={`w-1.5 h-1.5 rounded-full ${isHealthy ? 'bg-hud-accent' : 'bg-hud-warn'}`}
+                ></span>
+                <span className="tracking-hud uppercase text-hud-text-dim">
+                    {health.uptime > 0 ? `${Math.floor(health.uptime / 60)}M UP` : 'CHK...'}
                 </span>
             </div>
         </div>

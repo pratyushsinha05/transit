@@ -102,6 +102,7 @@ func main() {
 
 	// Routes and stops
 	api.GET("/routes", routeHandler.GetRoutes)
+	api.POST("/routes", routeHandler.CreateRoute)
 	api.GET("/stops", stopHandler.GetStops)
 
 	// Arrivals
