@@ -57,3 +57,30 @@ export interface ConnectionState {
     lastHeartbeat?: Date;
     reconnectAttempts: number;
 }
+
+// ── Route Creator Types ──
+
+export interface RouteCreatorStop {
+    tempId: string;
+    name: string;
+    lat: number;
+    lng: number;
+}
+
+export interface CreateRoutePayload {
+    name: string;
+    description: string;
+    stops: {
+        name: string;
+        latitude: number;
+        longitude: number;
+    }[];
+}
+
+export interface CreateRouteResponse {
+    id: string;
+    name: string;
+    description: string;
+    stop_count: number;
+    stop_ids: string[];
+}

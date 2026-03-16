@@ -1,45 +1,68 @@
 /**
  * Arrival Card
- * Displays a single arrival prediction
+ * Displays a single arrival as a telemetry readout row
  */
 
 import type { Arrival } from '../../types/domain';
-import clsx from 'clsx';
 import { formatDistanceToNow } from 'date-fns';
 
 interface Props {
     arrival: Arrival;
 }
 
+const statusConfig: Record<string, { color: string; label: string; pulse?: boolean }> = {
+    on_time: { color: '#00f5d4', label: 'ON TIME' },
+    delayed: { color: '#ff6b35', label: 'DELAYED' },
+    arriving: { color: '#00f5d4', label: 'ARRIVING', pulse: true },
+    cancelled: { color: '#ff3860', label: 'CANCELLED' },
+    scheduled: { color: '#576574', label: 'SCHEDULED' },
+};
+
 export const ArrivalCard = ({ arrival }: Props) => {
-    const statusColors = {
-        on_time: 'text-green-600',
-        delayed: 'text-red-500',
-        arriving: 'text-blue-600 animate-pulse',
-        cancelled: 'text-gray-400 line-through',
-        scheduled: 'text-gray-600',
-    };
+    const status = statusConfig[arrival.status] || statusConfig.scheduled;
 
     return (
-        <div className="p-3 bg-white rounded-lg shadow-sm border border-gray-100 flex justify-between items-center mb-2">
-            <div>
+        <div className="px-4 py-3 border-b border-hud-border/50 hover:bg-hud-panel/40 transition-colors">
+            {/* Top row: Route + Status */}
+            <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                    <span className="font-bold text-lg">{arrival.route}</span>
-                    <span className={clsx('text-xs font-medium uppercase px-1.5 py-0.5 rounded bg-gray-100', statusColors[arrival.status])}>
-                        {arrival.status.replace('_', ' ')}
+                    <span
+                        className={`w-1.5 h-1.5 rounded-full ${status.pulse ? 'animate-blink' : ''}`}
+                        style={{ backgroundColor: status.color }}
+                    ></span>
+                    <span className="text-[12px] font-bold text-hud-text-bright tracking-hud uppercase">
+                        {arrival.route}
                     </span>
                 </div>
-                <div className="text-xs text-gray-500 mt-1">
-                    Bus #{arrival.busId}
-                </div>
+                <span
+                    className="text-[8px] font-bold tracking-hud-wide uppercase px-1.5 py-0.5 border rounded-sm"
+                    style={{
+                        color: status.color,
+                        borderColor: `${status.color}33`,
+                        backgroundColor: `${status.color}0d`,
+                    }}
+                >
+                    {status.label}
+                </span>
             </div>
 
-            <div className="text-right">
-                <div className="text-2xl font-bold text-gray-800">
-                    {arrival.eta}<span className="text-xs font-normal text-gray-500 ml-1">min</span>
+            {/* Telemetry fields */}
+            <div className="grid grid-cols-3 gap-2">
+                <div>
+                    <div className="hud-label">VEHICLE</div>
+                    <div className="text-[10px] text-hud-text tracking-hud">{arrival.busId}</div>
                 </div>
-                <div className="text-[10px] text-gray-400">
-                    Updated {formatDistanceToNow(arrival.timestamp, { addSuffix: true })}
+                <div>
+                    <div className="hud-label">ETA</div>
+                    <div className="text-[14px] font-bold" style={{ color: status.color }}>
+                        {arrival.eta}<span className="text-[8px] text-hud-text-dim ml-0.5">MIN</span>
+                    </div>
+                </div>
+                <div>
+                    <div className="hud-label">UPDATED</div>
+                    <div className="text-[9px] text-hud-text-dim tracking-wider">
+                        {formatDistanceToNow(arrival.timestamp, { addSuffix: true }).toUpperCase()}
+                    </div>
                 </div>
             </div>
         </div>

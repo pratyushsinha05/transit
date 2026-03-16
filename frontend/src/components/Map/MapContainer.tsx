@@ -1,6 +1,6 @@
 /**
  * Map Container
- * Renders the main map view
+ * Renders the main map view with CartoDB Dark Matter tiles
  */
 
 import { MapContainer as LeafletMap, TileLayer, ZoomControl } from 'react-leaflet';
@@ -9,6 +9,9 @@ import L from 'leaflet';
 import { BusMarkers } from './BusMarkers';
 import { StopMarkers } from './StopMarkers';
 import { RoutePolyline } from './RoutePolyline';
+import { MapClickHandler } from './MapClickHandler';
+import { RouteCreatorMarkers } from './RouteCreatorMarkers';
+import { MapCameraHandler } from './MapCameraHandler';
 
 // Fix leaflet icon issue in React
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -37,14 +40,25 @@ export const MapContainer = () => {
             zoomControl={false}
         >
             <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution='&copy; <a href="https://carto.com/">CARTO</a>'
+                url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                subdomains="abcd"
+                maxZoom={20}
             />
             <ZoomControl position="bottomright" />
 
+            <MapCameraHandler />
+
+            {/* Map click handler for route creation */}
+            <MapClickHandler />
+
+            {/* Existing data layers */}
+            <RoutePolyline />
             <BusMarkers />
             <StopMarkers />
-            <RoutePolyline />
+
+            {/* Route creator layer */}
+            <RouteCreatorMarkers />
         </LeafletMap>
     );
 };
