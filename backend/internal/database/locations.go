@@ -56,11 +56,10 @@ func (r *LocationRepository) Insert(ctx context.Context, loc *models.Location) e
 		ts = time.Now()
 	}
 
-	// Insert with H3 hex and PostGIS geometry
-	// ST_SetSRID(ST_MakePoint(lng, lat), 4326) creates a proper PostGIS point
+	// geom is populated automatically by the trg_location_geom BEFORE INSERT trigger
 	query := `
-		INSERT INTO location_history (time, device_id, latitude, longitude, speed, accuracy, hex_res9, geom)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, ST_SetSRID(ST_MakePoint($4, $3), 4326))
+		INSERT INTO location_history (time, device_id, latitude, longitude, speed, accuracy, hex_res9)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
 	`
 
 	_, err := r.db.Exec(ctx, query,

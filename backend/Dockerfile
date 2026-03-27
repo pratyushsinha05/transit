@@ -60,7 +60,7 @@ COPY --from=builder /app/server /app/server
 COPY --from=builder /app/migrations /app/migrations
 
 # Copy public assets if they exist
-COPY --from=builder /app/public /app/public
+# COPY --from=builder /app/public /app/public
 
 # Set ownership
 RUN chown -R appuser:appgroup /app

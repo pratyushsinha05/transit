@@ -3,6 +3,9 @@ package database
 import (
 	"context"
 	"fmt"
+	"io/fs"
+	"log"
+	"strings"
 	"time"
 
 	"transit-backend/internal/config"
@@ -45,4 +48,58 @@ func New(cfg *config.Config) (*pgxpool.Pool, error) {
 	}
 
 	return pool, nil
+}
+
+// RunMigrations applies any unapplied SQL migrations from the provided filesystem.
+// It tracks applied migrations in a schema_migrations table.
+func RunMigrations(ctx context.Context, pool *pgxpool.Pool, migrations fs.FS) error {
+	_, err := pool.Exec(ctx, `
+		CREATE TABLE IF NOT EXISTS schema_migrations (
+			version TEXT PRIMARY KEY,
+			applied_at TIMESTAMP DEFAULT NOW()
+		)
+	`)
+	if err != nil {
+		return fmt.Errorf("create schema_migrations: %w", err)
+	}
+
+	entries, err := fs.ReadDir(migrations, ".")
+	if err != nil {
+		return fmt.Errorf("read migrations: %w", err)
+	}
+
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".sql") {
+			continue
+		}
+		version := entry.Name()
+
+		var exists bool
+		if err := pool.QueryRow(ctx,
+			"SELECT EXISTS(SELECT 1 FROM schema_migrations WHERE version = $1)", version,
+		).Scan(&exists); err != nil {
+			return fmt.Errorf("check migration %s: %w", version, err)
+		}
+		if exists {
+			continue
+		}
+
+		sql, err := fs.ReadFile(migrations, version)
+		if err != nil {
+			return fmt.Errorf("read migration %s: %w", version, err)
+		}
+
+		if _, err := pool.Exec(ctx, string(sql)); err != nil {
+			return fmt.Errorf("apply migration %s: %w", version, err)
+		}
+
+		if _, err := pool.Exec(ctx,
+			"INSERT INTO schema_migrations (version) VALUES ($1)", version,
+		); err != nil {
+			return fmt.Errorf("record migration %s: %w", version, err)
+		}
+
+		log.Printf("Applied migration: %s", version)
+	}
+	return nil
 }

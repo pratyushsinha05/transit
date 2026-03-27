@@ -16,6 +16,7 @@ import (
 	"transit-backend/internal/hub"
 	"transit-backend/internal/middleware"
 	"transit-backend/internal/services"
+	"transit-backend/migrations"
 
 	"github.com/labstack/echo/v4"
 )
@@ -38,6 +39,12 @@ func main() {
 	}
 	defer dbPool.Close()
 	log.Println("Database connected")
+
+	// 2a. Run migrations
+	if err := database.RunMigrations(context.Background(), dbPool, migrations.Files); err != nil {
+		log.Fatalf("Failed to run migrations: %v", err)
+	}
+	log.Println("Migrations up to date")
 
 	// 3. Connect to Redis
 	redisClient, err := cache.New(cfg)
