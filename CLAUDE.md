@@ -209,29 +209,38 @@ in the README is stronger than hiding them.
 
 ## 4. Known defects — fix these in Phase 1
 
-All four were found by a self-directed adversarial repo audit and are **pre-diagnosed**.
-This is execution, not investigation. Do not re-litigate the diagnosis.
+All six were found by a self-directed adversarial repo audit. DEFECT-1 through 4 are
+**pre-diagnosed**; this is execution, not investigation. DEFECT-5 and DEFECT-6 were added
+mid-Phase-1 when the WebSocket contract fix surfaced them.
 
-### DEFECT-1: Handler bypasses service (architectural)
+### DEFECT-1: Handler bypasses service (architectural) — CLOSED at `5ab7448`
 
-- **Where:** `backend/internal/handlers/arrivals.go` vs
-  `backend/internal/services/arrivals.go`
-- **What:** `ArrivalsService` is constructed in `backend/cmd/server/main.go` and then
-  **ignored**. The handler reaches directly into repositories and recomputes raw math itself.
-- **Consequence:** the k-ring approach-detection logic never executes. Dead code in the
-  binary. The Clean Architecture the repo advertises is not the architecture it runs.
-- **Fix:** handler takes a service interface in its constructor and calls it. No repository
-  imports in `backend/internal/handlers/`. Add a compile-time interface assertion.
-- **Verify:** `grep -rn "database\." backend/internal/handlers/` returns nothing.
+- **Where:** turned out to be **five** handlers, not one:
+  `backend/internal/handlers/arrivals.go`, `stops.go`, `location.go`, `routes.go` (each held
+  a concrete `*database.X` repository) and `nearby.go` (held a concrete
+  `*services.GeofencingService` instead of an interface).
+- **What:** `ArrivalsService` was constructed in `backend/cmd/server/main.go` and then
+  **ignored**; the arrivals handler reached directly into repositories and recomputed raw
+  math itself. The other four handlers had never gone through a service at all.
+- **Consequence:** the k-ring approach-detection logic never executed. Dead code in the
+  binary. The Clean Architecture the repo advertised was not the architecture it ran.
+- **Fix:** every handler takes a service interface, declared in `handlers` (the consumer
+  package). Every service that touched a repository directly now takes a repository
+  interface, declared in `services`. Compile-time assertions live in
+  `cmd/server/main.go` — the one place allowed to import both an interface's package and its
+  concrete implementation's package without inverting the layering.
+- **Verify:** `grep -rn "database\." backend/internal/handlers/` returns nothing. Confirmed
+  clean as of `5ab7448`.
 
 ### DEFECT-2: WebSocket contract mismatch
 
 - **Where:** `backend/internal/hub/message.go` `Message` struct vs
   `frontend/src/services/websocket/messageHandler.ts` and `frontend/src/types/domain.ts`
-- **What:** frontend expects `route_id` and `h3_hex` on `LOCATION_UPDATE` payloads. The
-  backend struct drops both during serialization.
-- **Fix:** backend adds both fields, per the canonical envelope in §7.2. `h3_hex` is useful
-  to the client; `route_id` is needed for filtering.
+- **What:** frontend expected `route_id` and `h3_hex` on `LOCATION_UPDATE` payloads. The
+  backend struct dropped both during serialization.
+- **Fix:** backend adds both fields, per the canonical envelope in §7.2 — flat, no `data`
+  wrapper. `h3_hex` is useful to the client; `route_id` is needed for filtering and is
+  **resolved server-side**, never accepted from the client (see §7.2).
 - **Verify:** a test asserts the serialized JSON shape; the frontend type mirrors it.
 
 ### DEFECT-3: Ghost UI
@@ -250,6 +259,34 @@ This is execution, not investigation. Do not re-litigate the diagnosis.
 - **Current:** `backend/pkg/geo` ~100%; `backend/internal/services` ~6.9%;
   `backend/internal/handlers` 0%; `backend/internal/hub` 0%; no integration tests at all.
 - **Fix:** Phase 3. Targets in §8.
+
+### DEFECT-5: `omitempty` drops legitimate zero values — Phase 1 scope
+
+- **Where:** `backend/internal/hub/message.go` `Message` struct (pre-fix).
+- **What:** every numeric field was tagged `omitempty`. A stopped device — the single most
+  common real state — serialized with no `speed` key at all, and the frontend's
+  `parseFloat(raw[schema.speed] || 0)` couldn't distinguish "stopped" from "not reported."
+  `latitude`/`longitude`/`accuracy` had the same hazard at exactly `0`.
+- **Fix:** remove `omitempty` from every numeric field on `Message`. Fixed in the same
+  commit as DEFECT-2, since the serialization test added there would otherwise encode the
+  bug.
+- **Verify:** the DEFECT-2 serialization test asserts `speed` is present and `0`, not absent.
+
+### DEFECT-6: Hub has no shutdown path — Phase 1 scope, not yet fixed
+
+- **Where:** `backend/internal/hub/hub.go` `Hub.Run()`.
+- **What:** an unbounded `for { select {...} }` over three channels with no `done`/`ctx`
+  case, started fire-and-forget at `cmd/server/main.go` (`go wsHub.Run()`). Client
+  goroutines in `handlers/websocket.go` are likewise fire-and-forget. Nothing ever stops the
+  hub; graceful shutdown only calls `e.Shutdown`.
+- **Consequence:** directly contradicts §7.1: "every goroutine has exactly one owner
+  responsible for its shutdown... The hub owns its own goroutines and drains cleanly on
+  shutdown." Also blocks writing the Phase 3 slow-consumer and disconnect-mid-broadcast hub
+  tests cleanly.
+- **Fix:** `Hub.Run(ctx)` + `Shutdown()`; wire into `cmd/server/main.go`'s graceful shutdown
+  alongside `e.Shutdown`.
+- **Status:** open. Deferred within Phase 1 rather than bundled into the WebSocket-envelope
+  commit — unrelated change, own commit, own verification.
 
 ---
 
@@ -383,23 +420,45 @@ distance using PostGIS already in the stack.
 - `pkg/geo` stays pure: no I/O, no logging, no clock reads, no state.
 - Logging: structured, levelled by `LOG_LEVEL`. Never log inside a tight ingestion loop.
 
-### 7.2 WebSocket envelope (canonical — resolves DEFECT-2)
+### 7.2 WebSocket envelope (canonical — resolves DEFECT-2, DEFECT-5)
 
-```json
-{
-  "type": "LOCATION_UPDATE",
-  "data": {
-    "device_id": "string",
-    "route_id":  "string",
-    "lat":       0.0,
-    "lng":       0.0,
-    "speed":     0.0,
-    "heading":   0.0,
-    "h3_hex":    "string",
-    "timestamp": "RFC3339"
-  }
+Flat envelope. No `data` wrapper. No `heading` — it does not exist anywhere in this
+codebase (not `models.Location`, not the DB, not the ingest payload) and is not being added.
+An earlier version of this section specified a nested `data` object and a `heading` field;
+both were written from audit docs, not the code, and were wrong. This is the correction.
+
+```go
+type Message struct {
+	Type      string  `json:"type"`
+	DeviceID  string  `json:"device_id"`
+	RouteID   string  `json:"route_id"`
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
+	Speed     float64 `json:"speed"`
+	Accuracy  float64 `json:"accuracy"`
+	H3Hex     string  `json:"h3_hex"`
+	Timestamp int64   `json:"timestamp"`
 }
 ```
+
+- **No `omitempty` on numeric fields** (DEFECT-5). A stopped device must serialize
+  `"speed": 0`, not omit the key.
+- **`timestamp` is unix seconds (`int64`), not RFC3339.** Matches what `models.Location`
+  already carries — no conversion needed at the point the message is built.
+- **DB column and Go model field stay `hex_res9`** (`location_history.hex_res9`,
+  `models.Location.HexRes9`) — not renamed. `Message.H3Hex` with JSON tag `h3_hex` is a
+  distinct field on this struct only, populated from `loc.HexRes9` when the message is
+  built. One name internally, one name on the wire.
+- **`route_id` is derived server-side from the device's active trip. It is never accepted
+  on ingest.** `POST /api/location` takes no `route_id` field. Resolved via
+  `database.DeviceRouteRepository` (`backend/internal/database/device_routes.go`) —
+  deliberately a new file, not an addition to `trips.go`, since §5.5 scopes `trips.go` out
+  of Phases 0–4.5. One query per ingest against `trips WHERE device_id = $1 AND status =
+  'IN_PROGRESS'`. Trip data is static in this POC (seed-only; nothing advances a trip at
+  runtime), so there's nothing to cache-invalidate and a per-ping query is cheap and
+  correct. If ingestion volume ever approaches the §9 throughput target and this query
+  shows up in the p99 budget, the fix is a Redis-cached device→route mapping — not built now
+  because nothing currently exercises this path at volume (YAGNI).
 
 Any change to this shape requires updating, in the same commit: the Go struct, the
 TypeScript type, the serialization test, and this section.
@@ -433,8 +492,14 @@ a documented default is a bug.
 | `backend/internal/handlers` | 0% | ≥ 50% |
 | `backend/internal/hub` | 0% | ≥ 50% |
 | `backend/internal/database` | 0% | Covered by integration test |
+| `backend/internal/config` | 0% | ≥ 40% |
+| `backend/internal/middleware` | 0% | ≥ 40% |
+| `backend/internal/cache` | 0% | Covered by integration test |
+| `backend/cmd/server` | 0% | None — composition root, wiring only |
 
-**Hard rule: no package sits at 0%.**
+**Hard rule: no package sits at 0%**, except `cmd/server`, which is explicitly exempted
+above because it has no logic to unit-test — everything it does is exercised by the
+integration test hitting the running binary.
 
 ### 8.2 What to test
 
