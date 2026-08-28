@@ -33,17 +33,19 @@ export const WS_CONFIG = {
     // Message schema mappings (what backend sends)
     schemas: {
         locationUpdate: {
-            // Exact JSON field names from Go hub.Message struct
+            // Exact JSON field names from Go hub.Message struct (CLAUDE.md
+            // Sec 7.2). Flat envelope, no `data` wrapper. There is no
+            // `heading` field -- it does not exist anywhere in the backend
+            // (not models.Location, not the DB, not this message) and none
+            // is mapped here.
             busId: 'device_id',              // hub.Message.DeviceID -> json:"device_id"
+            routeId: 'route_id',             // hub.Message.RouteID -> json:"route_id" (server-resolved, may be "")
             lat: 'latitude',                 // hub.Message.Latitude -> json:"latitude"
             lng: 'longitude',                // hub.Message.Longitude -> json:"longitude"
             speed: 'speed',                  // hub.Message.Speed -> json:"speed"
             accuracy: 'accuracy',            // hub.Message.Accuracy -> json:"accuracy"
-            lastUpdate: 'timestamp',         // hub.Message.Timestamp -> json:"timestamp" (unix int64)
-            // Note: routeId, heading, h3_hex are NOT in hub.Message — not populated
-            routeId: null,
-            heading: null,
-            h3_hex: null,
+            h3_hex: 'h3_hex',                // hub.Message.H3Hex -> json:"h3_hex"
+            lastUpdate: 'timestamp',         // hub.Message.Timestamp -> json:"timestamp" (unix seconds)
         },
 
         arrivalUpdate: {

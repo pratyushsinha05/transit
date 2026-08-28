@@ -41,3 +41,10 @@ type RouteRepository interface {
 type DeviceCache interface {
 	SetDeviceState(ctx context.Context, deviceID string, state map[string]interface{}) error
 }
+
+// DeviceRouteRepository resolves a device's currently active route,
+// server-side -- ingest never accepts route_id as input (CLAUDE.md Sec 7.2).
+// Satisfied by *database.DeviceRouteRepository.
+type DeviceRouteRepository interface {
+	GetActiveRouteID(ctx context.Context, deviceID string) (string, error)
+}

@@ -28,16 +28,17 @@ import (
 // Sec 3.2). A service or handler package importing its own concrete
 // dependency here would be the layering violation DEFECT-1 was.
 var (
-	_ handlers.ArrivalService     = (*services.ArrivalsService)(nil)
-	_ handlers.StopsService       = (*services.StopsService)(nil)
-	_ handlers.RoutesService      = (*services.RoutesService)(nil)
-	_ handlers.IngestService      = (*services.IngestService)(nil)
-	_ handlers.NearbyService      = (*services.GeofencingService)(nil)
-	_ services.StopRepository     = (*database.StopRepository)(nil)
-	_ services.TripRepository     = (*database.TripRepository)(nil)
-	_ services.LocationRepository = (*database.LocationRepository)(nil)
-	_ services.RouteRepository    = (*database.RouteRepository)(nil)
-	_ services.DeviceCache        = (*cache.DeviceCache)(nil)
+	_ handlers.ArrivalService        = (*services.ArrivalsService)(nil)
+	_ handlers.StopsService          = (*services.StopsService)(nil)
+	_ handlers.RoutesService         = (*services.RoutesService)(nil)
+	_ handlers.IngestService         = (*services.IngestService)(nil)
+	_ handlers.NearbyService         = (*services.GeofencingService)(nil)
+	_ services.StopRepository        = (*database.StopRepository)(nil)
+	_ services.TripRepository        = (*database.TripRepository)(nil)
+	_ services.LocationRepository    = (*database.LocationRepository)(nil)
+	_ services.RouteRepository       = (*database.RouteRepository)(nil)
+	_ services.DeviceCache           = (*cache.DeviceCache)(nil)
+	_ services.DeviceRouteRepository = (*database.DeviceRouteRepository)(nil)
 )
 
 func main() {
@@ -78,6 +79,7 @@ func main() {
 	stopRepo := database.NewStopRepository(dbPool)
 	tripRepo := database.NewTripRepository(dbPool)
 	routeRepo := database.NewRouteRepository(dbPool)
+	deviceRouteRepo := database.NewDeviceRouteRepository(dbPool)
 
 	// Legacy cache wrapper for backward compatibility
 	deviceCache := cache.NewDeviceCache(redisClient)
@@ -93,7 +95,7 @@ func main() {
 	go wsHub.Run()
 	log.Println("WebSocket hub started")
 
-	ingestService := services.NewIngestService(locRepo, deviceCache, wsHub)
+	ingestService := services.NewIngestService(locRepo, deviceRouteRepo, deviceCache, wsHub)
 
 	// 7. Initialize Handlers
 	locHandler := handlers.NewLocationHandler(ingestService)
