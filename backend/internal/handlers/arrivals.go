@@ -41,7 +41,8 @@ func (h *ArrivalHandler) GetArrivals(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal error"})
 	}
 
-	var arrivals []models.ArrivalEvent
+	// Initialize as empty slice (not nil) so JSON always serializes to [] not null
+	arrivals := make([]models.ArrivalEvent, 0)
 	for _, trip := range trips {
 		eta := geo.CalculateETA(trip.Latitude, trip.Longitude, targetStop.Latitude, targetStop.Longitude, trip.Speed)
 		arrivals = append(arrivals, models.ArrivalEvent{

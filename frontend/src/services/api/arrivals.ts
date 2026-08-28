@@ -15,15 +15,13 @@ export const fetchArrivals = async (stopId: string) => {
             params: { stop_id: stopId }
         });
 
-        // Transform responses using actual backend schema
-        const arrivals = response.data.map(transformArrival);
-
-        // Validate
-        if (!Array.isArray(arrivals)) {
-            throw new Error('Expected array of arrivals');
+        // Backend returns [] when no arrivals, but guard against null for safety
+        const raw = response.data || [];
+        if (!Array.isArray(raw)) {
+            throw new Error('Expected array of arrivals from backend');
         }
 
-        return arrivals;
+        return raw.map(transformArrival);
     } catch (error) {
         logger.error('Failed to fetch arrivals', { stopId, error });
         throw error;

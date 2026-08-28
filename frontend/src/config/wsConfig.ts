@@ -17,7 +17,7 @@ export const WS_CONFIG = {
         heartbeat_ack: 'heartbeat_ack',
 
         // Real-time location updates
-        location_update: 'location_update', // Bus location changed
+        location_update: 'LOCATION_UPDATE', // Must match Go const MsgTypeLocationUpdate
 
         // Real-time arrival updates
         arrival_update: 'arrival_update',   // ETA updated for arrival
@@ -33,15 +33,17 @@ export const WS_CONFIG = {
     // Message schema mappings (what backend sends)
     schemas: {
         locationUpdate: {
-            // Expected by component -> Backend field name
-            busId: 'bus_id',                 // Unique bus ID
-            lat: 'latitude',                 // Current latitude
-            lng: 'longitude',                // Current longitude
-            routeId: 'route_id',             // Current route
-            speed: 'speed',                  // Speed km/h
-            heading: 'heading',              // Direction 0-360
-            lastUpdate: 'last_updated',      // ISO 8601 timestamp
-            h3_hex: 'h3_hex',               // H3 hexagon (server calculated)
+            // Exact JSON field names from Go hub.Message struct
+            busId: 'device_id',              // hub.Message.DeviceID -> json:"device_id"
+            lat: 'latitude',                 // hub.Message.Latitude -> json:"latitude"
+            lng: 'longitude',                // hub.Message.Longitude -> json:"longitude"
+            speed: 'speed',                  // hub.Message.Speed -> json:"speed"
+            accuracy: 'accuracy',            // hub.Message.Accuracy -> json:"accuracy"
+            lastUpdate: 'timestamp',         // hub.Message.Timestamp -> json:"timestamp" (unix int64)
+            // Note: routeId, heading, h3_hex are NOT in hub.Message — not populated
+            routeId: null,
+            heading: null,
+            h3_hex: null,
         },
 
         arrivalUpdate: {

@@ -90,31 +90,31 @@ ON CONFLICT (id) DO UPDATE SET status = 'IN_PROGRESS';
 -- Insert sample location history (simulating bus movement)
 -- ============================================
 -- Bus 001 moving along Route 1
+-- hex_res9 values precomputed from Go h3-go/v4 at resolution 9
 INSERT INTO location_history (time, device_id, latitude, longitude, speed, accuracy, hex_res9) VALUES
-    (NOW() - INTERVAL '5 minutes', 'bus-001', 28.6280, 77.2180, 25.0, 10.0, NULL),
-    (NOW() - INTERVAL '4 minutes', 'bus-001', 28.6300, 77.2200, 28.0, 8.0, NULL),
-    (NOW() - INTERVAL '3 minutes', 'bus-001', 28.6320, 77.2220, 30.0, 5.0, NULL),
-    (NOW() - INTERVAL '2 minutes', 'bus-001', 28.6335, 77.2235, 26.0, 6.0, NULL),
-    (NOW() - INTERVAL '1 minute', 'bus-001', 28.6350, 77.2250, 22.0, 5.0, NULL);
+    (NOW() - INTERVAL '5 minutes', 'bus-001', 28.6280, 77.2180, 25.0, 10.0, '893da11408fffff'),
+    (NOW() - INTERVAL '4 minutes', 'bus-001', 28.6300, 77.2200, 28.0, 8.0,  '893da11408fffff'),
+    (NOW() - INTERVAL '3 minutes', 'bus-001', 28.6320, 77.2220, 30.0, 5.0,  '893da1140b3ffff'),
+    (NOW() - INTERVAL '2 minutes', 'bus-001', 28.6335, 77.2235, 26.0, 6.0,  '893da1140b3ffff'),
+    (NOW() - INTERVAL '1 minute', 'bus-001', 28.6350, 77.2250, 22.0, 5.0,  '893da1140b7ffff');
 
 -- Bus 002 at Central Station
 INSERT INTO location_history (time, device_id, latitude, longitude, speed, accuracy, hex_res9) VALUES
-    (NOW() - INTERVAL '2 minutes', 'bus-002', 28.6139, 77.2090, 0.0, 5.0, NULL),
-    (NOW() - INTERVAL '1 minute', 'bus-002', 28.6140, 77.2091, 5.0, 5.0, NULL),
-    (NOW(), 'bus-002', 28.6142, 77.2095, 15.0, 5.0, NULL);
+    (NOW() - INTERVAL '2 minutes', 'bus-002', 28.6139, 77.2090, 0.0,  5.0, '893da11462fffff'),
+    (NOW() - INTERVAL '1 minute', 'bus-002', 28.6140, 77.2091, 5.0,  5.0, '893da11462fffff'),
+    (NOW(),                        'bus-002', 28.6142, 77.2095, 15.0, 5.0, '893da11462fffff');
 
 -- Bus 003 on Airport Shuttle
 INSERT INTO location_history (time, device_id, latitude, longitude, speed, accuracy, hex_res9) VALUES
-    (NOW() - INTERVAL '3 minutes', 'bus-003', 28.6700, 77.1800, 45.0, 10.0, NULL),
-    (NOW() - INTERVAL '2 minutes', 'bus-003', 28.6400, 77.1500, 50.0, 8.0, NULL),
-    (NOW() - INTERVAL '1 minute', 'bus-003', 28.6100, 77.1200, 55.0, 5.0, NULL);
+    (NOW() - INTERVAL '3 minutes', 'bus-003', 28.6700, 77.1800, 45.0, 10.0, '893da11601bffff'),
+    (NOW() - INTERVAL '2 minutes', 'bus-003', 28.6400, 77.1500, 50.0, 8.0,  '893da1175c7ffff'),
+    (NOW() - INTERVAL '1 minute', 'bus-003', 28.6100, 77.1200, 55.0, 5.0,  '893da1176c3ffff');
 
 -- ============================================
--- Update location history to populate geom
+-- geom is populated automatically by the trg_location_geom BEFORE INSERT trigger
+-- (added in migration 003). No manual UPDATE needed here.
+-- hex_res9 values are pre-computed above (not NULL).
 -- ============================================
-UPDATE location_history 
-SET geom = ST_SetSRID(ST_MakePoint(longitude, latitude), 4326)
-WHERE geom IS NULL AND latitude IS NOT NULL AND longitude IS NOT NULL;
 
 -- ============================================
 -- Verify data was inserted

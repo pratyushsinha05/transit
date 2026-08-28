@@ -62,27 +62,28 @@ const handleLocationUpdate = (raw: any) => {
     const schema = WS_CONFIG.schemas.locationUpdate;
 
     try {
-        // Map backend fields to frontend model
-        // Note: raw.data might be the wrapper, or raw itself. 
-        // Assuming raw contains the fields directly or inside 'data' property.
-        // Based on user "what backend sends", let's assume raw is the message object 
-        // and it has the properties top-level or in a payload. 
-        // The simplified schema check suggests top-level access or we access raw[schema.field].
+        // Backend hub.Message fields: type, device_id, latitude, longitude, speed, accuracy, timestamp (unix int64)
+        const deviceId = raw[schema.busId]; // schema.busId = 'device_id'
+        if (!deviceId) return; // invalid message, skip silently
 
-        // Let's assume the message structure is { type: '...', ...fields }
+        // Timestamp from backend is unix seconds (int64). Convert to Date.
+        const rawTs = raw[schema.lastUpdate]; // schema.lastUpdate = 'timestamp'
+        const lastUpdate = rawTs
+            ? new Date(typeof rawTs === 'number' ? rawTs * 1000 : rawTs)
+            : new Date();
 
         const location: BusLocation = {
-            id: raw[schema.busId],
-            routeId: raw[schema.routeId],
+            id: deviceId,
+            routeId: schema.routeId ? raw[schema.routeId] : undefined, // not in backend msg
             lat: parseFloat(raw[schema.lat]),
             lng: parseFloat(raw[schema.lng]),
             speed: parseFloat(raw[schema.speed] || 0),
-            heading: parseFloat(raw[schema.heading] || 0),
-            lastUpdate: new Date(raw[schema.lastUpdate]),
-            h3Hex: raw[schema.h3_hex],
+            heading: schema.heading ? parseFloat(raw[schema.heading] || 0) : 0,
+            lastUpdate,
+            h3Hex: schema.h3_hex ? raw[schema.h3_hex] : undefined, // not in backend msg
         };
 
-        if (!location.id) return; // Invalid data
+        if (isNaN(location.lat) || isNaN(location.lng)) return; // bad coordinates
 
         useStore.getState().updateBus(location);
     } catch (error) {
