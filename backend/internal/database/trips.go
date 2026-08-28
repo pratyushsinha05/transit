@@ -3,6 +3,8 @@ package database
 import (
 	"context"
 
+	"transit-backend/internal/models"
+
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -14,16 +16,7 @@ func NewTripRepository(db *pgxpool.Pool) *TripRepository {
 	return &TripRepository{db: db}
 }
 
-type TripWithLocation struct {
-	TripID     string
-	DeviceID   string
-	DeviceName string // In a real app we'd join with devices table
-	Latitude   float64
-	Longitude  float64
-	Speed      float64
-}
-
-func (r *TripRepository) GetActiveTripsBeforeStop(ctx context.Context, stopSequence int) ([]TripWithLocation, error) {
+func (r *TripRepository) GetActiveTripsBeforeStop(ctx context.Context, stopSequence int) ([]models.TripWithLocation, error) {
 	// Logic:
 	// 1. Get active trips (current_stop < sequence)
 	// 2. Lateral join with location_history to get latest position
@@ -51,9 +44,9 @@ func (r *TripRepository) GetActiveTripsBeforeStop(ctx context.Context, stopSeque
 	}
 	defer rows.Close()
 
-	var results []TripWithLocation
+	var results []models.TripWithLocation
 	for rows.Next() {
-		var t TripWithLocation
+		var t models.TripWithLocation
 		if err := rows.Scan(&t.TripID, &t.DeviceID, &t.DeviceName, &t.Latitude, &t.Longitude, &t.Speed); err != nil {
 			return nil, err
 		}

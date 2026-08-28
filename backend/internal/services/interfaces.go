@@ -3,7 +3,6 @@ package services
 import (
 	"context"
 
-	"transit-backend/internal/database"
 	"transit-backend/internal/models"
 )
 
@@ -18,7 +17,7 @@ type StopRepository interface {
 
 // TripRepository is the subset of trip-storage behavior the services layer needs.
 type TripRepository interface {
-	GetActiveTripsBeforeStop(ctx context.Context, stopSequence int) ([]database.TripWithLocation, error)
+	GetActiveTripsBeforeStop(ctx context.Context, stopSequence int) ([]models.TripWithLocation, error)
 }
 
 // LocationRepository is the subset of location-storage behavior the services

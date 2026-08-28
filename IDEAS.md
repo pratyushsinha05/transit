@@ -105,3 +105,57 @@ section. Two-line fix in `main.go` when picked back up.
 `done`/`ctx` case, started fire-and-forget. §7.1 requires an owner and clean drain. Deferred
 to Phase 3, where it's needed anyway for the slow-consumer and disconnect-mid-broadcast hub
 tests — landing it there avoids doing the work twice.
+
+## From the Understanding Pass — Pass 1 partition
+
+Found while partitioning the tracked file list for the read-only understanding pass. Both
+are housekeeping, neither blocks any phase. Recorded, not fixed — the pass is read-only.
+
+**U1 — a tracked file literally named `=` at the repo root.** Six bytes, ASCII, contents
+`31.3.2`. A shell-redirection accident (`... >= 31.3.2` without quoting) that got committed
+and has survived since. It is not referenced by anything. Verified with `git ls-files` and
+`file =`. Deleting it is a one-line `git rm`, but that is a tree change and this pass does
+not make them.
+
+**U2 — `frontend/src/utils/` is an empty orphaned directory.** DEFECT-3 deleted
+`h3Helpers.ts` (confirmed: `find . -name 'h3Helpers*'` returns nothing, and `git ls-files
+frontend/src/utils/` is empty), but the now-empty directory was left on disk. Git does not
+track empty directories, so it is invisible to `git status` and will not appear in a fresh
+clone — it only exists in working trees that predate the deletion. Harmless; noted so a
+future reader does not mistake it for a missing module.
+
+**U3 — the zone spec used to drive this pass did not cover the SPA entry point.**
+`frontend/index.html`, `frontend/src/main.tsx`, and `frontend/src/App.tsx` matched none of
+the six zone patterns and were only read because the partition step diffed its zones against
+`git ls-files` and routed the remainder to a catch-all. This is the same failure mode that
+caused the prior audit to miss trips, route-creator, and OSRM: zone boundaries drawn from an
+idea of the repo rather than from its file list. Not a code defect — a process note worth
+keeping, since the next pass that partitions this repo should diff against `git ls-files`
+first and dispatch second.
+
+## From closing DEFECT-1 properly
+
+Found while moving `TripWithLocation` out of `database` and into `models`. None of these were
+touched by that commit; recorded here and left alone.
+
+**D14 — the app's only WebSocket is opened as a side effect of rendering
+`ConnectionStatus.tsx:11`.** Unmounting the header component kills the live feed.
+Architectural smell; no fix scheduled.
+
+**D15 — `GetActiveTripsBeforeStop` takes `stopSequence` but never scopes by route.** Every
+`IN_PROGRESS` trip system-wide with `current_stop < N` matches, regardless of route. Invisible
+with single-route seed data; wrong the moment a second route exists. Fix is a route filter —
+Phase 4 scope.
+
+**D16 — `models.ArrivalEvent` (`models/trip.go:11`) is dead:** declared, never constructed,
+never returned. The two other grep hits are the substring inside `DetectArrivalEvent`.
+`BASELINE.md` §3.1 wrongly lists it as the `/api/arrivals` response type; that is
+`services.ArrivalPrediction`.
+
+**D17 — two files fail `gofmt -l` at HEAD, pre-dating any current work:**
+`internal/models/route.go` (struct-tag alignment in `CreateRouteResponse`, lines 22–30 —
+`StopIDs []string` widened the column and the other four tags were never re-aligned) and
+`pkg/geo/distance_test.go:27` (trailing whitespace). Trivial, but nothing enforces gofmt in
+this repo — no pre-commit hook, no CI check. The formatting is a symptom; the missing gate is
+the actual gap. Both belong in a `chore: gofmt` commit, and the gate itself is Phase 5 CI
+scope.
