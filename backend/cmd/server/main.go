@@ -29,9 +29,15 @@ import (
 // dependency here would be the layering violation DEFECT-1 was.
 var (
 	_ handlers.ArrivalService     = (*services.ArrivalsService)(nil)
+	_ handlers.StopsService       = (*services.StopsService)(nil)
+	_ handlers.RoutesService      = (*services.RoutesService)(nil)
+	_ handlers.IngestService      = (*services.IngestService)(nil)
+	_ handlers.NearbyService      = (*services.GeofencingService)(nil)
 	_ services.StopRepository     = (*database.StopRepository)(nil)
 	_ services.TripRepository     = (*database.TripRepository)(nil)
 	_ services.LocationRepository = (*database.LocationRepository)(nil)
+	_ services.RouteRepository    = (*database.RouteRepository)(nil)
+	_ services.DeviceCache        = (*cache.DeviceCache)(nil)
 )
 
 func main() {
@@ -79,16 +85,20 @@ func main() {
 	// 5. Initialize Services
 	geoService := services.NewGeofencingService(locRepo, stopRepo)
 	arrivalsService := services.NewArrivalsService(stopRepo, tripRepo, locRepo, geoService)
+	stopsService := services.NewStopsService(stopRepo)
+	routesService := services.NewRoutesService(routeRepo)
 
 	// 6. Initialize Hub
 	wsHub := hub.New()
 	go wsHub.Run()
 	log.Println("WebSocket hub started")
 
+	ingestService := services.NewIngestService(locRepo, deviceCache, wsHub)
+
 	// 7. Initialize Handlers
-	locHandler := handlers.NewLocationHandler(locRepo, deviceCache, wsHub)
-	routeHandler := handlers.NewRouteHandler(routeRepo)
-	stopHandler := handlers.NewStopHandler(stopRepo)
+	locHandler := handlers.NewLocationHandler(ingestService)
+	routeHandler := handlers.NewRouteHandler(routesService)
+	stopHandler := handlers.NewStopHandler(stopsService)
 	arrivalHandler := handlers.NewArrivalHandler(arrivalsService)
 	wsHandler := handlers.NewWebSocketHandler(wsHub)
 	nearbyHandler := handlers.NewNearbyHandler(geoService)

@@ -2,17 +2,18 @@ package handlers
 
 import (
 	"net/http"
-	"transit-backend/internal/database"
 
 	"github.com/labstack/echo/v4"
 )
 
+// StopHandler serves stop lookups. Depends only on the StopsService
+// interface (CLAUDE.md Sec 3.2) -- no repository imports.
 type StopHandler struct {
-	repo *database.StopRepository
+	service StopsService
 }
 
-func NewStopHandler(repo *database.StopRepository) *StopHandler {
-	return &StopHandler{repo: repo}
+func NewStopHandler(service StopsService) *StopHandler {
+	return &StopHandler{service: service}
 }
 
 func (h *StopHandler) GetStops(c echo.Context) error {
@@ -21,7 +22,7 @@ func (h *StopHandler) GetStops(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "route_id is required"})
 	}
 
-	stops, err := h.repo.GetByRouteID(c.Request().Context(), routeID)
+	stops, err := h.service.GetStopsByRoute(c.Request().Context(), routeID)
 	if err != nil {
 		c.Logger().Error(err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal error"})

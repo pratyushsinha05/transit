@@ -9,13 +9,15 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// NearbyHandler handles nearby buses and stops queries
+// NearbyHandler handles nearby buses and stops queries. Depends only on the
+// NearbyService interface (CLAUDE.md Sec 3.2) -- not the concrete
+// *services.GeofencingService.
 type NearbyHandler struct {
-	geoService *services.GeofencingService
+	geoService NearbyService
 }
 
 // NewNearbyHandler creates a new NearbyHandler
-func NewNearbyHandler(geoService *services.GeofencingService) *NearbyHandler {
+func NewNearbyHandler(geoService NearbyService) *NearbyHandler {
 	return &NearbyHandler{geoService: geoService}
 }
 

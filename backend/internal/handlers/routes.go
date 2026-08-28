@@ -3,26 +3,26 @@ package handlers
 import (
 	"net/http"
 
-	"transit-backend/internal/database"
 	"transit-backend/internal/models"
 
 	"github.com/labstack/echo/v4"
 )
 
-// RouteHandler handles route-related endpoints
+// RouteHandler handles route-related endpoints. Depends only on the
+// RoutesService interface (CLAUDE.md Sec 3.2) -- no repository imports.
 type RouteHandler struct {
-	repo *database.RouteRepository
+	service RoutesService
 }
 
 // NewRouteHandler creates a new RouteHandler
-func NewRouteHandler(repo *database.RouteRepository) *RouteHandler {
-	return &RouteHandler{repo: repo}
+func NewRouteHandler(service RoutesService) *RouteHandler {
+	return &RouteHandler{service: service}
 }
 
 // GetRoutes handles GET /api/routes
 // Returns all routes from the database
 func (h *RouteHandler) GetRoutes(c echo.Context) error {
-	routes, err := h.repo.GetAll(c.Request().Context())
+	routes, err := h.service.GetRoutes(c.Request().Context())
 	if err != nil {
 		c.Logger().Error(err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal error"})
@@ -55,7 +55,7 @@ func (h *RouteHandler) CreateRoute(c echo.Context) error {
 		}
 	}
 
-	result, err := h.repo.Create(c.Request().Context(), req)
+	result, err := h.service.CreateRoute(c.Request().Context(), req)
 	if err != nil {
 		c.Logger().Error("Failed to create route:", err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to create route"})
