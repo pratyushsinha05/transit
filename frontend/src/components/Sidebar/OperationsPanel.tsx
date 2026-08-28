@@ -55,16 +55,6 @@ export const OperationsPanel = () => {
                             </span>
                             <input type="checkbox" className="hidden" checked={layerVisibility.buses} onChange={() => toggleLayer('buses')} />
                         </label>
-
-                        <label className="flex items-center gap-3 cursor-pointer group opacity-50">
-                            <div className={`w-3 h-3 border flex items-center justify-center transition-colors ${layerVisibility.grid ? 'bg-hud-accent/20 border-hud-accent' : 'border-hud-border'}`}>
-                                {layerVisibility.grid && <div className="w-1.5 h-1.5 bg-hud-accent"></div>}
-                            </div>
-                            <span className={`text-[10px] tracking-hud uppercase font-mono transition-colors ${layerVisibility.grid ? 'text-hud-text-bright' : 'text-hud-text-dim'}`}>
-                                H3 SPATIAL GRID
-                            </span>
-                            <input type="checkbox" className="hidden" checked={layerVisibility.grid} onChange={() => toggleLayer('grid')} />
-                        </label>
                     </div>
                 </div>
 

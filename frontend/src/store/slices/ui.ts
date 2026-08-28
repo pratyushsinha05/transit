@@ -33,9 +33,9 @@ export interface UiSlice {
     clearCreatorStops: () => void;
 
     // Map Layers & Operations
-    layerVisibility: { stops: boolean; buses: boolean; grid: boolean };
+    layerVisibility: { stops: boolean; buses: boolean };
     hiddenRoutes: string[];
-    toggleLayer: (layer: 'stops' | 'buses' | 'grid') => void;
+    toggleLayer: (layer: 'stops' | 'buses') => void;
     toggleRouteVisibility: (routeId: string) => void;
 }
 
@@ -58,7 +58,7 @@ export const createUiSlice: StateCreator<
     routeCreatorDescription: '',
 
     // Layer defaults
-    layerVisibility: { stops: true, buses: true, grid: false },
+    layerVisibility: { stops: true, buses: true },
     hiddenRoutes: [],
 
     addNotification: (notification) => set((state) => ({
