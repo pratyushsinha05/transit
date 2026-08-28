@@ -62,6 +62,18 @@ defines `MsgTypeLocationUpdate`. It calls `updateArrival(stopId, arrival as any)
 the store if it ever ran. Inert today; revisit when/if a WS arrival-style event exists —
 Phase 4's `GEOFENCE_EVENT` is the closer real analog, not this shape.
 
+**D13 — `BusLocation.heading` and `BusMarkers.tsx`'s HEADING popup row are a permanent
+ghost.** `heading` was never real — always defaulted to `0` — but until the CLAUDE.md §7.2
+correction there was at least a live plan (the original, wrong §7.2) to eventually populate
+it. That plan is now explicitly cancelled: `heading` does not exist in `models.Location`,
+the DB, or the ingest payload, and per the corrected §7.2 it never will. This is the same
+shape as DEFECT-3 (a UI element with no real data behind it) but wasn't fixed alongside the
+WS envelope commit since it wasn't part of what was asked there. Fix: either make
+`BusLocation.heading` optional and drop the popup row (DEFECT-3-style), or, if heading ever
+becomes a real requirement, compute it client-side from consecutive position deltas — the
+only place data for it could plausibly come from without adding a sensor input the devices
+don't have.
+
 **D10 — `models.Trip` is dead code.** Zero references anywhere (confirmed via
 `grep -rn "models\.Trip\b"`). Unlike `models.Device` (kept — see BASELINE.md §2),
 `ArrivalEvent` in the same file is live and would need splitting out first. Low priority;
