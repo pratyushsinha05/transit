@@ -61,9 +61,9 @@ const StopPopupContent = ({ stopId, stopName, stopAddress }: { stopId: string; s
                         <div className="hud-label mb-1">INCOMING VEHICLES</div>
                         {arrivals.slice(0, 3).map((arrival, i) => (
                             <div key={arrival.id || i} className="flex justify-between items-center py-1 border-b border-hud-border/50 last:border-b-0">
-                                <span className="text-[10px] text-hud-text tracking-hud">{arrival.route}</span>
+                                <span className="text-[10px] text-hud-text tracking-hud">{arrival.deviceName || arrival.deviceId}</span>
                                 <span className="text-hud-accent font-bold text-[12px]">
-                                    {arrival.eta}<span className="text-[8px] text-hud-text-dim ml-0.5">MIN</span>
+                                    {arrival.etaMinutes}<span className="text-[8px] text-hud-text-dim ml-0.5">MIN</span>
                                 </span>
                             </div>
                         ))}

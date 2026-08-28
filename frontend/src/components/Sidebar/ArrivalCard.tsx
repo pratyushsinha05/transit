@@ -1,67 +1,66 @@
 /**
  * Arrival Card
- * Displays a single arrival as a telemetry readout row
+ * Displays a single predicted arrival as a telemetry readout row.
+ *
+ * Driven entirely by backend services.ArrivalPrediction fields -- there is
+ * no route/status/timestamp on this response, so the status chip reflects
+ * the real is_approaching flag (k-ring membership) rather than an invented
+ * enum.
  */
 
 import type { Arrival } from '../../types/domain';
-import { formatDistanceToNow } from 'date-fns';
 
 interface Props {
     arrival: Arrival;
 }
 
-const statusConfig: Record<string, { color: string; label: string; pulse?: boolean }> = {
-    on_time: { color: '#00f5d4', label: 'ON TIME' },
-    delayed: { color: '#ff6b35', label: 'DELAYED' },
-    arriving: { color: '#00f5d4', label: 'ARRIVING', pulse: true },
-    cancelled: { color: '#ff3860', label: 'CANCELLED' },
-    scheduled: { color: '#576574', label: 'SCHEDULED' },
-};
-
 export const ArrivalCard = ({ arrival }: Props) => {
-    const status = statusConfig[arrival.status] || statusConfig.scheduled;
+    const statusColor = arrival.isApproaching ? '#00f5d4' : '#576574';
+    const statusLabel = arrival.isApproaching ? 'APPROACHING' : 'EN ROUTE';
 
     return (
         <div className="px-4 py-3 border-b border-hud-border/50 hover:bg-hud-panel/40 transition-colors">
-            {/* Top row: Route + Status */}
+            {/* Top row: Vehicle + Status */}
             <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                     <span
-                        className={`w-1.5 h-1.5 rounded-full ${status.pulse ? 'animate-blink' : ''}`}
-                        style={{ backgroundColor: status.color }}
+                        className={`w-1.5 h-1.5 rounded-full ${arrival.isApproaching ? 'animate-blink' : ''}`}
+                        style={{ backgroundColor: statusColor }}
                     ></span>
                     <span className="text-[12px] font-bold text-hud-text-bright tracking-hud uppercase">
-                        {arrival.route}
+                        {arrival.deviceName || arrival.deviceId}
                     </span>
                 </div>
                 <span
                     className="text-[8px] font-bold tracking-hud-wide uppercase px-1.5 py-0.5 border rounded-sm"
                     style={{
-                        color: status.color,
-                        borderColor: `${status.color}33`,
-                        backgroundColor: `${status.color}0d`,
+                        color: statusColor,
+                        borderColor: `${statusColor}33`,
+                        backgroundColor: `${statusColor}0d`,
                     }}
                 >
-                    {status.label}
+                    {statusLabel}
                 </span>
             </div>
 
             {/* Telemetry fields */}
             <div className="grid grid-cols-3 gap-2">
                 <div>
-                    <div className="hud-label">VEHICLE</div>
-                    <div className="text-[10px] text-hud-text tracking-hud">{arrival.busId}</div>
-                </div>
-                <div>
                     <div className="hud-label">ETA</div>
-                    <div className="text-[14px] font-bold" style={{ color: status.color }}>
-                        {arrival.eta}<span className="text-[8px] text-hud-text-dim ml-0.5">MIN</span>
+                    <div className="text-[14px] font-bold" style={{ color: statusColor }}>
+                        {arrival.etaMinutes}<span className="text-[8px] text-hud-text-dim ml-0.5">MIN</span>
                     </div>
                 </div>
                 <div>
-                    <div className="hud-label">UPDATED</div>
-                    <div className="text-[9px] text-hud-text-dim tracking-wider">
-                        {formatDistanceToNow(arrival.timestamp, { addSuffix: true }).toUpperCase()}
+                    <div className="hud-label">DISTANCE</div>
+                    <div className="text-[10px] text-hud-text tracking-hud">
+                        {arrival.distanceKm.toFixed(2)}<span className="text-[8px] text-hud-text-dim ml-0.5">KM</span>
+                    </div>
+                </div>
+                <div>
+                    <div className="hud-label">SPEED</div>
+                    <div className="text-[10px] text-hud-text tracking-hud">
+                        {Math.round(arrival.currentSpeed)}<span className="text-[8px] text-hud-text-dim ml-0.5">KM/H</span>
                     </div>
                 </div>
             </div>

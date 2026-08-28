@@ -2,56 +2,34 @@ package handlers
 
 import (
 	"net/http"
-	"transit-backend/internal/database"
-	"transit-backend/internal/models"
-	"transit-backend/pkg/geo"
 
 	"github.com/labstack/echo/v4"
 )
 
+// ArrivalHandler serves arrival predictions. It depends only on the
+// ArrivalService interface (CLAUDE.md Sec 3.2) -- no repository imports.
 type ArrivalHandler struct {
-	stopRepo *database.StopRepository
-	tripRepo *database.TripRepository
+	service ArrivalService
 }
 
-func NewArrivalHandler(stopRepo *database.StopRepository, tripRepo *database.TripRepository) *ArrivalHandler {
-	return &ArrivalHandler{
-		stopRepo: stopRepo,
-		tripRepo: tripRepo,
-	}
+func NewArrivalHandler(service ArrivalService) *ArrivalHandler {
+	return &ArrivalHandler{service: service}
 }
 
+// GetArrivals handles GET /api/arrivals?stop_id=...
+// Returns []services.ArrivalPrediction: trip_id, device_id, device_name,
+// eta_minutes, distance_km, current_speed, hex_res9, is_approaching.
 func (h *ArrivalHandler) GetArrivals(c echo.Context) error {
 	stopID := c.QueryParam("stop_id")
 	if stopID == "" {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "stop_id is required"})
 	}
 
-	// Get target stop details
-	targetStop, err := h.stopRepo.GetByID(c.Request().Context(), stopID)
+	predictions, err := h.service.GetArrivalsForStop(c.Request().Context(), stopID)
 	if err != nil {
-		c.Logger().Error("failed to get stop", err)
+		c.Logger().Error("failed to get arrivals: ", err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal error"})
 	}
 
-	// Get active trips before this stop
-	trips, err := h.tripRepo.GetActiveTripsBeforeStop(c.Request().Context(), targetStop.Sequence)
-	if err != nil {
-		c.Logger().Error("failed to get trips", err)
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal error"})
-	}
-
-	// Initialize as empty slice (not nil) so JSON always serializes to [] not null
-	arrivals := make([]models.ArrivalEvent, 0)
-	for _, trip := range trips {
-		eta := geo.CalculateETA(trip.Latitude, trip.Longitude, targetStop.Latitude, targetStop.Longitude, trip.Speed)
-		arrivals = append(arrivals, models.ArrivalEvent{
-			TripID:     trip.TripID,
-			DeviceID:   trip.DeviceID,
-			DeviceName: trip.DeviceName,
-			ETAMinutes: eta,
-		})
-	}
-
-	return c.JSON(http.StatusOK, arrivals)
+	return c.JSON(http.StatusOK, predictions)
 }

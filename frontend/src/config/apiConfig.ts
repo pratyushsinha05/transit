@@ -53,15 +53,19 @@ export const API_CONFIG = {
     // Response schemas (from Go backend)
     // Format: component expects these field names
     schemas: {
+        // Mirrors backend services.ArrivalPrediction exactly -- see
+        // backend/internal/services/arrivals.go. There is no bus_id, status,
+        // route, or timestamp field on this response.
         arrival: {
-            // What component expects -> What backend sends
-            id: 'id',                        // Unique arrival ID
-            busId: 'bus_id',                 // Bus identifier
-            eta: 'eta',                      // ETA in minutes (integer)
-            status: 'status',                // 'on_time', 'delayed', 'arriving'
-            route: 'route_number',           // Route identifier (e.g., 'Route 42')
-            routeId: 'route_id',             // Route ID for linking
-            timestamp: 'timestamp',          // Server timestamp (ISO 8601)
+            id: 'trip_id',                   // trip_id doubles as the arrival's unique ID
+            tripId: 'trip_id',
+            deviceId: 'device_id',
+            deviceName: 'device_name',
+            etaMinutes: 'eta_minutes',
+            distanceKm: 'distance_km',
+            currentSpeed: 'current_speed',
+            hexRes9: 'hex_res9',             // omitempty on the backend
+            isApproaching: 'is_approaching',
         },
 
         stop: {

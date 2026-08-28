@@ -21,6 +21,19 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// Compile-time interface satisfaction checks. These live in the composition
+// root because it is the one place allowed to import both an interface's
+// package and its concrete implementation's package without inverting the
+// handlers -> services -> repositories -> database layering (CLAUDE.md
+// Sec 3.2). A service or handler package importing its own concrete
+// dependency here would be the layering violation DEFECT-1 was.
+var (
+	_ handlers.ArrivalService     = (*services.ArrivalsService)(nil)
+	_ services.StopRepository     = (*database.StopRepository)(nil)
+	_ services.TripRepository     = (*database.TripRepository)(nil)
+	_ services.LocationRepository = (*database.LocationRepository)(nil)
+)
+
 func main() {
 	log.Println("Starting Transit Backend Server...")
 
@@ -66,7 +79,6 @@ func main() {
 	// 5. Initialize Services
 	geoService := services.NewGeofencingService(locRepo, stopRepo)
 	arrivalsService := services.NewArrivalsService(stopRepo, tripRepo, locRepo, geoService)
-	_ = arrivalsService // Will be used for enhanced arrivals endpoint
 
 	// 6. Initialize Hub
 	wsHub := hub.New()
@@ -77,7 +89,7 @@ func main() {
 	locHandler := handlers.NewLocationHandler(locRepo, deviceCache, wsHub)
 	routeHandler := handlers.NewRouteHandler(routeRepo)
 	stopHandler := handlers.NewStopHandler(stopRepo)
-	arrivalHandler := handlers.NewArrivalHandler(stopRepo, tripRepo)
+	arrivalHandler := handlers.NewArrivalHandler(arrivalsService)
 	wsHandler := handlers.NewWebSocketHandler(wsHub)
 	nearbyHandler := handlers.NewNearbyHandler(geoService)
 

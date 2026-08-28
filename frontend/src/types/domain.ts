@@ -3,16 +3,20 @@
  * Core data structures used throughout the application
  */
 
-export type ArrivalStatus = 'on_time' | 'delayed' | 'arriving' | 'cancelled' | 'scheduled';
-
+// Mirrors backend services.ArrivalPrediction (GET /api/arrivals). There is no
+// route/status/timestamp on this response -- the backend doesn't have that
+// data on this path. Do not add fields here that transformArrival can't
+// populate from a real response field.
 export interface Arrival {
-    id: string;
-    busId: string;
-    eta: number; // Minutes
-    status: ArrivalStatus;
-    route: string; // Route number/name
-    routeId: string;
-    timestamp: Date;
+    id: string; // = tripId; every active trip has exactly one prediction
+    tripId: string;
+    deviceId: string;
+    deviceName: string;
+    etaMinutes: number;
+    distanceKm: number;
+    currentSpeed: number; // km/h
+    hexRes9?: string;
+    isApproaching: boolean;
 }
 
 export interface Stop {

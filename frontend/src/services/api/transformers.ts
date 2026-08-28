@@ -4,34 +4,29 @@
  */
 
 import { API_CONFIG } from '../../config/apiConfig';
-import type { Arrival, ArrivalStatus, Stop, BusLocation, Route } from '../../types/domain';
+import type { Arrival, Stop, BusLocation, Route } from '../../types/domain';
 import { logger } from '../logger';
 
 export const transformArrival = (raw: any): Arrival => {
     try {
         const schema = API_CONFIG.schemas.arrival;
 
-        // Map backend fields to frontend types
+        // Map backend services.ArrivalPrediction fields to the frontend type
         const arrival: Arrival = {
             id: raw[schema.id],
-            busId: raw[schema.busId],
-            eta: parseInt(raw[schema.eta] || 0),
-            status: raw[schema.status] as ArrivalStatus,
-            route: raw[schema.route],
-            routeId: raw[schema.routeId],
-            timestamp: new Date(raw[schema.timestamp]),
+            tripId: raw[schema.tripId],
+            deviceId: raw[schema.deviceId],
+            deviceName: raw[schema.deviceName],
+            etaMinutes: parseInt(raw[schema.etaMinutes] ?? 0, 10),
+            distanceKm: parseFloat(raw[schema.distanceKm] ?? 0),
+            currentSpeed: parseFloat(raw[schema.currentSpeed] ?? 0),
+            hexRes9: raw[schema.hexRes9] || undefined,
+            isApproaching: Boolean(raw[schema.isApproaching]),
         };
 
         // Validation
-        if (!arrival.id || !arrival.busId) {
-            throw new Error('Missing required fields: id or busId');
-        }
-
-        // Validate status enum
-        const validStatuses = ['on_time', 'delayed', 'arriving', 'cancelled', 'scheduled'];
-        if (!validStatuses.includes(arrival.status)) {
-            logger.warn('Invalid arrival status', { status: arrival.status, raw });
-            arrival.status = 'on_time'; // Fallback
+        if (!arrival.id || !arrival.deviceId) {
+            throw new Error('Missing required fields: trip_id or device_id');
         }
 
         return arrival;

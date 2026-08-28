@@ -26,7 +26,7 @@ export const createArrivalsSlice: StateCreator<
     })),
     updateArrival: (stopId, arrival) => set((state) => {
         const currentArrivals = state.arrivals.byStopId.get(stopId) || [];
-        const index = currentArrivals.findIndex(a => a.busId === arrival.busId);
+        const index = currentArrivals.findIndex(a => a.tripId === arrival.tripId);
 
         let newArrivals;
         if (index >= 0) {

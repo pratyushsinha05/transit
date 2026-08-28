@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"transit-backend/internal/database"
 	"transit-backend/internal/models"
 
 	"github.com/uber/h3-go/v4"
@@ -10,13 +9,13 @@ import (
 
 // GeofencingService handles H3-based geofencing and spatial queries
 type GeofencingService struct {
-	locRepo    *database.LocationRepository
-	stopRepo   *database.StopRepository
+	locRepo    LocationRepository
+	stopRepo   StopRepository
 	resolution int // H3 resolution for geofencing (default: 9)
 }
 
 // NewGeofencingService creates a new GeofencingService
-func NewGeofencingService(locRepo *database.LocationRepository, stopRepo *database.StopRepository) *GeofencingService {
+func NewGeofencingService(locRepo LocationRepository, stopRepo StopRepository) *GeofencingService {
 	return &GeofencingService{
 		locRepo:    locRepo,
 		stopRepo:   stopRepo,
@@ -25,7 +24,7 @@ func NewGeofencingService(locRepo *database.LocationRepository, stopRepo *databa
 }
 
 // NewGeofencingServiceWithResolution creates a service with custom H3 resolution
-func NewGeofencingServiceWithResolution(locRepo *database.LocationRepository, stopRepo *database.StopRepository, resolution int) *GeofencingService {
+func NewGeofencingServiceWithResolution(locRepo LocationRepository, stopRepo StopRepository, resolution int) *GeofencingService {
 	return &GeofencingService{
 		locRepo:    locRepo,
 		stopRepo:   stopRepo,

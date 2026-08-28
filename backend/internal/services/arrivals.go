@@ -2,24 +2,23 @@ package services
 
 import (
 	"context"
-	"transit-backend/internal/database"
 	"transit-backend/internal/models"
 	"transit-backend/pkg/geo"
 )
 
 // ArrivalsService handles arrival predictions and ETA calculations
 type ArrivalsService struct {
-	stopRepo   *database.StopRepository
-	tripRepo   *database.TripRepository
-	locRepo    *database.LocationRepository
+	stopRepo   StopRepository
+	tripRepo   TripRepository
+	locRepo    LocationRepository
 	geoService *GeofencingService
 }
 
 // NewArrivalsService creates a new ArrivalsService
 func NewArrivalsService(
-	stopRepo *database.StopRepository,
-	tripRepo *database.TripRepository,
-	locRepo *database.LocationRepository,
+	stopRepo StopRepository,
+	tripRepo TripRepository,
+	locRepo LocationRepository,
 	geoService *GeofencingService,
 ) *ArrivalsService {
 	return &ArrivalsService{
