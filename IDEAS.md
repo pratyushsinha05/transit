@@ -159,3 +159,17 @@ never returned. The two other grep hits are the substring inside `DetectArrivalE
 this repo — no pre-commit hook, no CI check. The formatting is a symptom; the missing gate is
 the actual gap. Both belong in a `chore: gofmt` commit, and the gate itself is Phase 5 CI
 scope.
+
+## From closing DEFECT-7
+
+**D18 — `004_seed_data.sql` seed pings are not stable across applies.** The three
+`location_history` inserts use `NOW() - INTERVAL 'N minutes'` for their timestamps, so every
+apply produces different `time` values for the same logical row. **No unique constraint could
+make these seeds idempotent** — the row identity itself changes between applies, so
+`ON CONFLICT` would never fire even with a key in place. That is why DEFECT-7 was closed with
+an `IF NOT EXISTS (SELECT 1 FROM location_history)` guard instead. Two further constraints on
+any future fix: TimescaleDB requires that a unique index on a hypertable **include the
+partitioning column**, so `time` must appear in any key; and replacing the relative
+timestamps with literals would make the seeds deterministic but push every row outside the
+5-minute max-age filters at `geofencing.go:144` and `geofencing.go:155`, so
+`/api/nearby/buses` would return nothing against seed data. Recorded, not scheduled.

@@ -312,7 +312,7 @@ WebSocket-envelope work surfaced them. All are Phase 1 scope.
   drops on a full client buffer, is exactly the behavior those tests must pin down.
 - **Fix:** `Hub.Run(ctx)` + `Shutdown()`, wired into graceful shutdown. Own commit.
 
-### DEFECT-7: Migrations apply twice on a fresh volume
+### DEFECT-7: Migrations apply twice on a fresh volume — CLOSED in the commit below
 
 - **Where:** `infra/docker-compose.yml:23` mounts `../backend/migrations` into
   `/docker-entrypoint-initdb.d`, so Postgres runs every `.sql` at first init. The Go binary
@@ -323,8 +323,32 @@ WebSocket-envelope work surfaced them. All are Phase 1 scope.
   **seed pings are duplicated**. Routes, stops, devices, and trips do use `ON CONFLICT`.
 - **Why this is Phase 1, not later:** duplicated rows in `location_history` corrupt every
   number Phase 3 and §9 will report.
-- **Fix:** add `ON CONFLICT DO NOTHING` to the three `location_history` inserts. Do not
-  restructure the double-apply itself — that is an infrastructure concern for Phase 5+.
+- **The `ON CONFLICT DO NOTHING` fix this section used to prescribe does not work.** It was
+  written without checking the schema, and it fails for two independent reasons:
+  1. **There is nothing to conflict against.** `location_history` has no `PRIMARY KEY`, no
+     `UNIQUE` constraint, and no `ADD CONSTRAINT` in any migration; all five of its indexes
+     are plain `CREATE INDEX`, and `create_hypertable` adds none. Bare
+     `ON CONFLICT DO NOTHING` is *syntactically legal* on such a table — that is the trap. It
+     compiles, the migration runs green, and it silently never fires. The targeted form
+     `ON CONFLICT (time, device_id)` instead fails outright with *"no unique or exclusion
+     constraint matching the ON CONFLICT specification"*.
+  2. **Adding a constraint would not have helped either.** Every seed row's timestamp is
+     `NOW() - INTERVAL 'N minutes'`, evaluated per apply. Postgres init runs at T₀, the Go
+     binary replays at T₁, and the same logical ping lands at `T₀−5min` then `T₁−5min` — a
+     different key. No constraint can deduplicate rows whose identity changes between
+     applies. Note also that TimescaleDB requires a unique index on a hypertable to include
+     the partitioning column, so `time` must appear in any future key. Tracked as D18 in
+     `IDEAS.md`.
+- **Fix as applied:** wrap only the three `location_history` inserts in
+  `DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM location_history) THEN ... END IF; END $$;`. This
+  is idempotent without touching the schema or the timestamp semantics. The six inserts that
+  already carry `ON CONFLICT` (devices, routes, three stops, trips) are unchanged — they have
+  real primary keys and work. The double-apply itself is **not** restructured; that remains an
+  infrastructure concern for Phase 5+.
+- **Verify:** `docker compose -f infra/docker-compose.yml down -v && up -d`, wait for the Go
+  binary to replay its ledger, then `SELECT count(*) FROM location_history;` returns **11**
+  (5 + 3 + 3), not 22. A `go build` alone does not test this and must not be reported as if
+  it did.
 
 ### Tracked but not scheduled
 
