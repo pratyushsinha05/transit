@@ -108,6 +108,15 @@ Anything stronger is not.
 3. One commit, real message, no "wip"
 4. If the phase overran its estimate, **cut scope** rather than carrying half-finished work
    into the next phase
+5. Run a claim-checker subagent over every `file:line` citation in this file. It reads
+   **source, not this file.** Any citation that does not resolve is fixed before the phase
+   closes.
+
+   *Rationale:* three citations in the §3.1 table alone were wrong across two passes — the
+   Redis `PoolSize` line, both H3 resolution lines, and an OSRM claim that contradicted the
+   Map row two lines above it. Two of them propagated into `docs/explain/00-inventory.md`
+   before anyone checked. This file is the most-trusted document in the repo and was the only
+   one with no gate over it.
 
 **Never work on two phases at once.** Drift is this repo's documented failure mode.
 
