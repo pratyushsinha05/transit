@@ -93,7 +93,6 @@ export const API_CONFIG = {
             lat: 'latitude',                 // Current latitude
             lng: 'longitude',                // Current longitude
             speed: 'speed',                  // Speed in km/h
-            heading: 'heading',              // Direction in degrees (0-360)
             lastUpdate: 'last_updated',      // Timestamp of last location update
             h3_hex: 'h3_hex',               // Current H3 hexagon (backend-calculated)
         },

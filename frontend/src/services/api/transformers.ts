@@ -76,15 +76,9 @@ export const transformBus = (raw: any): BusLocation => {
             lat: parseFloat(raw[schema.lat]),
             lng: parseFloat(raw[schema.lng]),
             speed: parseFloat(raw[schema.speed] || 0),
-            heading: parseFloat(raw[schema.heading] || 0),
             lastUpdate: new Date(raw[schema.lastUpdate]),
             h3Hex: raw[schema.h3_hex],  // Backend-calculated geospatial hex
         };
-
-        // Validate heading (0-360)
-        if (bus.heading < 0 || bus.heading > 360) {
-            bus.heading = 0; // Fallback
-        }
 
         return bus;
     } catch (error) {

@@ -76,13 +76,9 @@ export const BusMarkers = () => {
                                         <div className="hud-value">{Math.round(bus.speed)} <span className="text-[9px] text-hud-text-dim">KM/H</span></div>
                                     </div>
                                     <div>
-                                        <div className="hud-label">HEADING</div>
-                                        <div className="hud-value">{Math.round(bus.heading)}°</div>
+                                        <div className="hud-label">ROUTE</div>
+                                        <div className="hud-value">{bus.routeId}</div>
                                     </div>
-                                </div>
-                                <div>
-                                    <div className="hud-label">ROUTE</div>
-                                    <div className="hud-value">{bus.routeId}</div>
                                 </div>
                                 <div className="pt-2 mt-2 border-t border-hud-border">
                                     <button 

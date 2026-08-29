@@ -44,7 +44,6 @@ export interface BusLocation {
     lat: number;
     lng: number;
     speed: number; // km/h
-    heading: number; // degrees 0-360
     lastUpdate: Date;
     h3Hex?: string; // H3 hexagon ID from backend
 }

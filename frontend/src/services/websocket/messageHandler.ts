@@ -64,8 +64,7 @@ const handleLocationUpdate = (raw: any) => {
     try {
         // Backend hub.Message fields (CLAUDE.md Sec 7.2): type, device_id,
         // route_id, latitude, longitude, speed, accuracy, h3_hex, timestamp
-        // (unix seconds). Flat envelope, no `data` wrapper. No `heading` --
-        // it does not exist anywhere in the backend.
+        // (unix seconds). Flat envelope, no `data` wrapper.
         const deviceId = raw[schema.busId]; // schema.busId = 'device_id'
         if (!deviceId) return; // invalid message, skip silently
 
@@ -78,7 +77,6 @@ const handleLocationUpdate = (raw: any) => {
             lat: parseFloat(raw[schema.lat]),
             lng: parseFloat(raw[schema.lng]),
             speed: parseFloat(raw[schema.speed] ?? 0),
-            heading: 0, // not sent by the backend; nothing in this codebase produces it
             lastUpdate,
             h3Hex: raw[schema.h3_hex] || undefined,
         };

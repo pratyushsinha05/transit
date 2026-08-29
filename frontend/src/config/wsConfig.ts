@@ -34,10 +34,7 @@ export const WS_CONFIG = {
     schemas: {
         locationUpdate: {
             // Exact JSON field names from Go hub.Message struct (CLAUDE.md
-            // Sec 7.2). Flat envelope, no `data` wrapper. There is no
-            // `heading` field -- it does not exist anywhere in the backend
-            // (not models.Location, not the DB, not this message) and none
-            // is mapped here.
+            // Sec 7.2). Flat envelope, no `data` wrapper.
             busId: 'device_id',              // hub.Message.DeviceID -> json:"device_id"
             routeId: 'route_id',             // hub.Message.RouteID -> json:"route_id" (server-resolved, may be "")
             lat: 'latitude',                 // hub.Message.Latitude -> json:"latitude"
