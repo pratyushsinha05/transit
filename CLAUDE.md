@@ -108,15 +108,25 @@ Anything stronger is not.
 3. One commit, real message, no "wip"
 4. If the phase overran its estimate, **cut scope** rather than carrying half-finished work
    into the next phase
-5. Run a claim-checker subagent over every `file:line` citation in this file. It reads
-   **source, not this file.** Any citation that does not resolve is fixed before the phase
-   closes.
+5. **Citation gate.** Extract every citation mechanically:
 
-   *Rationale:* three citations in the §3.1 table alone were wrong across two passes — the
-   Redis `PoolSize` line, both H3 resolution lines, and an OSRM claim that contradicted the
-   Map row two lines above it. Two of them propagated into `docs/explain/00-inventory.md`
-   before anyone checked. This file is the most-trusted document in the repo and was the only
-   one with no gate over it.
+   ```
+   grep -oE '[A-Za-z0-9_./-]+\.(go|ts|tsx|sql|yml|sh|md):[0-9]+' CLAUDE.md | sort -u
+   ```
+
+   Pass that list to a claim-checker subagent as its input. It reads **source, not this
+   file.** The agent MUST account for every entry — exact, wrong (with the correct line), or
+   not-applicable (forward-looking, e.g. §8.2's `integration_test.go`). **A checker that
+   returns fewer rows than the extracted list has under-covered; re-run it.**
+
+   *Rationale:* the first run of this gate found the DEFECT-3 staleness but omitted four §6
+   JOIN citations and three `ui.ts` line numbers from its table, then concluded all citations
+   were accurate. Asking an agent to both *find* and *check* citations reproduces the failure
+   the gate exists to catch. The list is mechanical; only the verification is judgment.
+   Earlier evidence for the gate itself: three §3.1 citations were wrong across two passes —
+   the Redis `PoolSize` line, both H3 resolution lines, and an OSRM claim that contradicted
+   the Map row two lines above it — and two propagated into `docs/explain/00-inventory.md`
+   before anyone checked.
 
 **Never work on two phases at once.** Drift is this repo's documented failure mode.
 
@@ -140,13 +150,16 @@ Anything stronger is not.
 | FE state | Zustand | 5 slices |
 | Styling | Tailwind | Dark "HUD" palette |
 | Map | `react-leaflet` + CartoDB Dark Matter tiles | |
-| Routing (frontend only) | OSRM public demo instance | `frontend/src/services/api/osrm.ts:9`, called by `RouteCreatorMarkers.tsx:5`. Snaps operator-drawn waypoints to roads. Falls back to straight lines on error. The only third-party **API** call in app code — but not the only outbound request: the CartoDB tiles (`MapContainer.tsx:44`) load on every map render and the Space Mono webfont (`index.html:10-12`) on every page load. |
+| Routing (frontend only) | OSRM public demo instance | `frontend/src/services/api/osrm.ts:9`, called by `frontend/src/components/Map/RouteCreatorMarkers.tsx:5`. Snaps operator-drawn waypoints to roads. Falls back to straight lines on error. The only third-party **API** call in app code — but not the only outbound request: the CartoDB tiles (`MapContainer.tsx:44`) load on every map render and the Space Mono webfont (`index.html:10-12`) on every page load. |
 | Config | `godotenv` | Defaults in `infra/docker-compose.yml` |
 | Local orchestration | Docker Compose | `transit-network` bridge |
 
 > **Note:** a prior doc (`graphify.html`) claimed Redux Toolkit. That was false. The
 > codebase uses **Zustand**. `docs/audit/ESSENCE.md:6` claims OSRM was stripped out. Also
-> false — see the table above. If a doc disagrees with the code, the doc is wrong.
+> false — see the table above. (That source's wording is softer than this rebuttal implies —
+> "strips away complex routing engines (like OSRM) in favor of high-throughput telemetry
+> ingestion" reads as emphasis rather than a claim of removal — but a document saying the
+> system strips OSRM away is misleading when OSRM is live on the route-creator path.) If a doc disagrees with the code, the doc is wrong.
 
 ### 3.2 Package layout and the layering rule
 
@@ -242,7 +255,7 @@ WebSocket-envelope work surfaced them. All are Phase 1 scope.
   binary. The Clean Architecture the repo advertised was not the architecture it ran.
 - **Fix:** every handler takes a service interface, declared in `handlers` (the consumer
   package). Every service that touched a repository directly now takes a repository
-  interface, declared in `services`. Compile-time assertions live in `cmd/server/main.go` —
+  interface, declared in `services`. Compile-time assertions live in `backend/cmd/server/main.go` —
   the one place allowed to import both an interface's package and its concrete
   implementation's package without inverting the layering.
 - **The `5ab7448` closure was incomplete.** `backend/internal/services/interfaces.go`
@@ -279,18 +292,26 @@ WebSocket-envelope work surfaced them. All are Phase 1 scope.
 - **Fix:** the canonical envelope in §7.2. Flat. `route_id` and `h3_hex` added backend-side.
 - **Verify:** a test asserts the serialized JSON shape; the frontend type mirrors it.
 
-### DEFECT-3: Ghost UI
+### DEFECT-3: Ghost UI — CLOSED at `066b129`
 
-- **Where:** `frontend/src/components/Sidebar/OperationsPanel.tsx:59-68` vs
-  `frontend/src/components/Map/MapContainer.tsx`
-- **What:** an "H3 Spatial Grid" toggle that toggles nothing. `MapContainer` reads no layer
-  state at all; no grid layer exists.
-- **Fix:** delete the toggle and the `grid` key from `store/slices/ui.ts` (lines 36, 38, 61).
-  `layerVisibility.stops` and `.buses` **are** consumed — keep the slice, drop only `grid`.
-  Also delete `frontend/src/utils/h3Helpers.ts`: Phase 0 confirmed it has **zero call
-  sites**, independent of the toggle, and all three of its exports operate on `bus.h3Hex`
-  which the backend never sent.
-- Do not implement the grid layer to justify the toggle. That is scope inflation.
+- **Where:** an "H3 Spatial Grid" toggle in
+  `frontend/src/components/Sidebar/OperationsPanel.tsx`, against
+  `frontend/src/components/Map/MapContainer.tsx`, which read no layer state at all.
+- **What:** the toggle toggled nothing. No grid layer existed. `frontend/src/utils/h3Helpers.ts`
+  was independently dead — zero call sites, and all three exports operated on `bus.h3Hex`,
+  which the backend did not send at the time.
+- **Fix as applied:** the toggle, the `grid` key in `store/slices/ui.ts`, and `h3Helpers.ts`
+  were all deleted. The grid layer was **not** implemented to justify the toggle — that would
+  have been scope inflation.
+- **Verify:** `grep -rn "grid" frontend/src/store/slices/ui.ts` returns nothing;
+  `frontend/src/utils/` is empty; `OperationsPanel.tsx` has exactly two layer toggles,
+  `stops` and `buses`.
+- **Process note.** This section described work already done for three review rounds, and its
+  staleness was reported three separate times — Pass 1 §7.2(f), the Sections 6–7 checker, and
+  the first citation gate — before anyone acted on it. Its old citations
+  (`OperationsPanel.tsx:59-68`, `ui.ts` lines 36/38/61) had by then drifted onto unrelated
+  code. **A finding reported three times and never actioned is its own failure**, distinct
+  from the defect it describes.
 
 ### DEFECT-4: Test coverage
 
@@ -313,7 +334,7 @@ WebSocket-envelope work surfaced them. All are Phase 1 scope.
 
 - **Where:** `backend/internal/hub/hub.go` `Hub.Run()`.
 - **What:** unbounded `for { select {...} }` over three channels with no `done`/`ctx` case,
-  started fire-and-forget at `cmd/server/main.go` (`go wsHub.Run()`). Client goroutines in
+  started fire-and-forget at `backend/cmd/server/main.go` (`go wsHub.Run()`). Client goroutines in
   `handlers/websocket.go:41-42` are likewise fire-and-forget. Graceful shutdown only calls
   `e.Shutdown`.
 - **Consequence:** contradicts §7.1 directly. Also blocks the Phase 3 slow-consumer and
@@ -428,8 +449,15 @@ touches them.
 > `grep -rn "type .*Bus"` finds only `models.NearbyBus` — **no `type Bus` exists**, so
 > nothing collides with `models.Device`. `models.Device` is a three-field device-roster
 > struct with **zero references** anywhere in the codebase, mirroring the live `devices`
-> table (which is joined in raw SQL at `database/locations.go:78,113,158` and
-> `database/trips.go:34`, scanning into other types).
+> table (which is joined in raw SQL at `database/locations.go:89,128,170` and
+> `database/trips.go:28`, scanning into other types).
+>
+> **All four of those citations were wrong until the first citation gate ran.** They were
+> written from an audit document, not from the code, and were already wrong at `v0-poc` —
+> `locations.go:78` is a comment, `:113` a doc comment, `:158` the `SELECT DISTINCT ON`
+> header, off by 11, 15 and 12 lines. `trips.go:34` was off by one when written and drifted
+> to a 6-line error when `fe918e0` removed `TripWithLocation` from that file, leaving it
+> pointing at `LIMIT 1`.
 >
 > **Decision: keep `models.Device` unchanged.** Do not rename into it. Do not delete it —
 > Phase 4's `stale` event needs a device roster to know which devices should be reporting.
@@ -787,6 +815,9 @@ pressure.
    to `0` in both producers and displayed a fabricated number for every device. §7.3's rule
    ("no new UI control ships without working logic") did not catch it because the control was
    not new.
+10. **Do not trust a check that defines its own scope.** The first CLAUDE.md citation gate
+    reported "all line numbers accurate" while silently skipping seven citations. Extract the
+    checklist mechanically; let the agent verify, not enumerate.
 
 ---
 
