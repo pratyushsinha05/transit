@@ -173,3 +173,17 @@ partitioning column**, so `time` must appear in any key; and replacing the relat
 timestamps with literals would make the seeds deterministic but push every row outside the
 5-minute max-age filters at `geofencing.go:144` and `geofencing.go:155`, so
 `/api/nearby/buses` would return nothing against seed data. Recorded, not scheduled.
+
+**D19 — `docker compose up -d` silently tests a stale backend image.**
+`backend/Dockerfile:60` bakes the migrations into the image
+(`COPY --from=builder /app/migrations /app/migrations`), while
+`infra/docker-compose.yml:23` mounts the same directory live into Postgres'
+`/docker-entrypoint-initdb.d`. So a plain `docker compose up -d` runs the **host** copy of a
+migration in Postgres and the **image** copy in the Go binary. Verifying DEFECT-7 hit exactly
+this: the local image was five months old (built 2026-03-27) and carried a `004_seed_data.sql`
+with `NULL` hex values, so the guard appeared not to work and the count came back 22 instead
+of 11. `make docker-up` is safe because it depends on `build-docker`; bare `compose up -d` is
+not. Any future migration verification must rebuild first
+(`docker compose build backend`, or `make rebuild-backend`). Recorded, not scheduled — the
+real fix is to stop mounting migrations into the Postgres init directory at all, which is the
+Phase 5 restructure DEFECT-7 deliberately left alone.
