@@ -24,7 +24,7 @@ func TestCalculateETA(t *testing.T) {
 	// 60 km distance at 60 km/h should be 60 minutes
 	// 1 degree lat is approx 111km.
 	// Let's use simple points.
-	
+
 	lat1, lng1 := 0.0, 0.0
 	lat2, lng2 := 1.0, 0.0 // Approx 111.19 km
 

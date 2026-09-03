@@ -22,9 +22,9 @@ type CreateStopInput struct {
 
 // CreateRouteResponse is returned after successful route creation
 type CreateRouteResponse struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	StopCount   int    `json:"stop_count"`
+	ID          string   `json:"id"`
+	Name        string   `json:"name"`
+	Description string   `json:"description"`
+	StopCount   int      `json:"stop_count"`
 	StopIDs     []string `json:"stop_ids"`
 }
