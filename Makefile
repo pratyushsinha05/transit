@@ -11,7 +11,7 @@
 .PHONY: docker-up docker-down docker-clean docker-logs docker-health
 .PHONY: docker-ps docker-shell docker-health-backend docker-restart
 .PHONY: db-migrate db-reset db-seed db-shell db-info
-.PHONY: test test-unit test-integration test-coverage fmt vet lint
+.PHONY: test test-unit test-integration test-coverage fmt vet lint lint-layering
 .PHONY: run dev dev-backend dev-docker
 .PHONY: clean clean-all clean-docker version info
 
@@ -715,3 +715,9 @@ help: ## Show this help message with all available targets
 	@echo "    make docker-clean    # Full reset"
 	@echo ""
 
+# ============================================================================
+# LAYERING GUARD (DEFECT-1 recurrence protection)
+# ============================================================================
+
+lint-layering: ## Verify handlers/services don't import database directly (layering rule)
+	@bash scripts/gate.sh --check=layering
