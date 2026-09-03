@@ -89,6 +89,8 @@ const handleLocationUpdate = (raw: any) => {
     }
 };
 
+// Dead: backend never emits this message type. Kept as scaffolding for
+// Phase 4 (GEOFENCE_EVENT) or future message types. See hub/message.go.
 const handleArrivalUpdate = (raw: any) => {
     const schema = WS_CONFIG.schemas.arrivalUpdate;
 
@@ -110,16 +112,19 @@ const handleArrivalUpdate = (raw: any) => {
     }
 };
 
+// Dead: backend never emits this message type. Kept as scaffolding.
 const handleRouteUpdate = (raw: any) => {
     // Routes usually static, but if updates come:
     logger.info('Route update received', { routeId: raw.route_id });
     // Implement if needed to update route path live
 };
 
+// Dead: backend never emits JSON heartbeats (protocol-level ping/pong is used).
 const handleHeartbeat = (_raw: any) => {
     useStore.getState().updateHeartbeat(new Date());
 };
 
+// Dead: backend never emits this message type. Kept as scaffolding.
 const handleError = (raw: any) => {
     logger.error('Backend reported error', { message: raw.message });
     useStore.getState().addNotification({
