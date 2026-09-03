@@ -2,8 +2,13 @@ package hub
 
 import (
 	"context"
+	"log"
 	"sync"
+	"sync/atomic"
 )
+
+// DroppedMessages tracks how many messages were dropped due to full client buffers.
+var DroppedMessages atomic.Int64
 
 type Hub struct {
 	Clients    map[*Client]bool
@@ -53,11 +58,8 @@ func (h *Hub) Run(ctx context.Context) {
 				select {
 				case client.Send <- message:
 				default:
-					// If the client's buffer is full, we assume it's dead or stuck.
-					// In a more robust system we might disconnect them.
-					// For now we just skip dropping the message for this client.
-					// To strictly follow prompt "send non-blocking (skip if buffer full)"
-					// we just skip here.
+					DroppedMessages.Add(1)
+					log.Printf("hub: dropped message for client %p (buffer full)", client)
 				}
 			}
 			h.mu.RUnlock()
