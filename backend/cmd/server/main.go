@@ -75,7 +75,7 @@ func main() {
 	log.Println("Redis connected")
 
 	// 4. Initialize Repositories
-	locRepo := database.NewLocationRepository(dbPool)
+	locRepo := database.NewLocationRepositoryWithResolution(dbPool, cfg.H3Resolution)
 	stopRepo := database.NewStopRepository(dbPool)
 	tripRepo := database.NewTripRepository(dbPool)
 	routeRepo := database.NewRouteRepository(dbPool)
@@ -85,7 +85,7 @@ func main() {
 	deviceCache := cache.NewDeviceCache(redisClient)
 
 	// 5. Initialize Services
-	geoService := services.NewGeofencingService(locRepo, stopRepo)
+	geoService := services.NewGeofencingServiceWithResolution(locRepo, stopRepo, cfg.H3Resolution)
 	arrivalsService := services.NewArrivalsService(stopRepo, tripRepo, locRepo, geoService)
 	stopsService := services.NewStopsService(stopRepo)
 	routesService := services.NewRoutesService(routeRepo)
