@@ -238,3 +238,16 @@ confirmed to fail against the pre-fix code with `Shutdown()` returning in ~7µs 
 `internal/hub` has 52 statements: 25 in `hub.go` and 27 in `client.go`. 100% coverage
 of `hub.go` alone reaches at most 25/52 = 48.07%, failing the ≥50.0% package gate.
 Reaching the target requires exercising `client.go` (`WritePump`/`ReadPump`).
+
+**D31 — `ReadPump`'s deferred `Unregister` send can block forever after hub shutdown.**
+Found while implementing the D28 fix. `Hub.Unregister` (`hub.go:31`) is unbuffered and only
+`Run`'s `select` loop ever reads it. Once `Run` returns (post-`ctx.Done()`, after D28's drain
+completes), nothing reads `Unregister` again. `Client.ReadPump`'s deferred
+`c.Hub.Unregister <- c` (`client.go:45`) then blocks forever if a connection error fires
+during or after shutdown. Low severity as observed: `main.go` calls `wsHub.Shutdown()` as
+its last statement before returning, so the leaked goroutine outlives the process by at most
+the time until `main` returns — Go does not wait for leaked goroutines on exit. Not fixed
+here; out of scope for D28, which is about message loss, not goroutine leaks. If this ever
+needs fixing, `Run` returning is the wrong signal to design around — the real fix is a
+`select` with a `ctx.Done()` case inside `ReadPump`'s own send, or draining `Unregister` in a
+second goroutine alongside `drainAndClose` until all `ReadPump`s have exited.
