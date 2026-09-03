@@ -187,3 +187,11 @@ not. Any future migration verification must rebuild first
 (`docker compose build backend`, or `make rebuild-backend`). Recorded, not scheduled — the
 real fix is to stop mounting migrations into the Postgres init directory at all, which is the
 Phase 5 restructure DEFECT-7 deliberately left alone.
+
+## From Phase 1A execution
+
+**D26 — `.gitignore` has bare `server` matching `backend/cmd/server/`.** Line 6 of `.gitignore`
+contains `server` without a leading slash, matching any file or directory named `server`
+in the tree. As a result, `git add backend/cmd/server/main.go` is rejected unless `-f`
+is passed, even though `main.go` is already tracked. Fix is to change `.gitignore:6` to
+`/server` so it only matches the compiled root binary.
