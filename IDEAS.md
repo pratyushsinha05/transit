@@ -195,3 +195,46 @@ contains `server` without a leading slash, matching any file or directory named 
 in the tree. As a result, `git add backend/cmd/server/main.go` is rejected unless `-f`
 is passed, even though `main.go` is already tracked. Fix is to change `.gitignore:6` to
 `/server` so it only matches the compiled root binary.
+
+## From Phase 1B execution
+
+**D27 — H3 LatLngToCell does not error on out-of-bounds coordinates.**
+`h3.LatLngToCell` wraps coordinates rather than rejecting latitudes outside `[-90, 90]`
+or longitudes outside `[-180, 180]`. Spatial boundary validation must remain strictly
+enforced at the HTTP handler layer (`handlers/location.go:37`).
+
+**D28 — Hub shutdown discards buffered client messages. FIXED.**
+The original write-up of this defect misdiagnosed the mechanism: closing a Go channel does
+not discard values already buffered in it — a receiver still drains every buffered value
+with `ok == true` before observing the close. Verified directly (`close()` on a filled
+buffered channel, then `for range`, receives every value). So `Client.WritePump` does not
+jump to its close-frame branch while messages remain queued.
+
+The real loss was one level up: `Hub.Shutdown()` returned the instant `h.done` closed, which
+happened immediately after `Run` closed every client's `Send` channel on `ctx.Done()` — it
+never waited for each client's `WritePump` goroutine to actually consume the backlog. In
+`cmd/server/main.go`, `wsHub.Shutdown()` is the last statement before `main` returns, so the
+process could exit with write pumps still mid-flight, losing whatever they hadn't yet read.
+
+Fixed in `internal/hub/hub.go`: on `ctx.Done()`, `Run` snapshots and clears the client set,
+then drains each client in parallel (`drainAndClose`, one goroutine per client via
+`sync.WaitGroup`) — polling `len(client.Send) == 0` every `clientDrainPollInterval` (1ms),
+bounded by `clientDrainTimeout` (250ms) — before closing that client's channel. A client
+that hasn't drained within the bound has its remainder counted into `DroppedMessages` and
+logged, then closed anyway. Worst-case shutdown time is `clientDrainTimeout` regardless of
+client count, since all clients drain concurrently. `Shutdown()`'s signature and `main.go`'s
+call site needed no change. `TestHubShutdown` (the DEFECT-6 exit gate) passes unmodified.
+New regression tests: `TestShutdownDrainsBufferedMessages` (an actively-read client receives
+everything before close) and `TestShutdownDropsAfterDrainTimeout` (a never-read client is
+dropped only after the timeout, proving `Shutdown()` waits rather than returning instantly —
+confirmed to fail against the pre-fix code with `Shutdown()` returning in ~7µs instead of
+≥250ms). Coverage of `internal/hub` rose from 87.0% to 90.8%.
+
+**D29 — Gorilla WebSocket ReadPump unexpected close error handling.**
+`client.go:54` excludes `CloseGoingAway` and `CloseAbnormalClosure`, but not
+`CloseNormalClosure` (1000). Clean peer disconnects can cause `log.Printf` error noise.
+
+**D30 — Hub package statement distribution requires client pump coverage for 50%.**
+`internal/hub` has 52 statements: 25 in `hub.go` and 27 in `client.go`. 100% coverage
+of `hub.go` alone reaches at most 25/52 = 48.07%, failing the ≥50.0% package gate.
+Reaching the target requires exercising `client.go` (`WritePump`/`ReadPump`).
