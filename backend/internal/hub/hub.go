@@ -104,6 +104,15 @@ func (h *Hub) Shutdown() {
 	<-h.done
 }
 
+// ClientCount returns the number of currently registered clients. Exported so
+// out-of-package tests can wait for registration deterministically without
+// touching the unexported mutex.
+func (h *Hub) ClientCount() int {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	return len(h.Clients)
+}
+
 // drainAndClose waits for a client's already-buffered messages to be consumed by
 // its WritePump, then closes the channel. The hub is the only writer to Send and
 // is therefore the only closer.

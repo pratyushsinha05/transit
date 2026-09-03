@@ -251,3 +251,41 @@ here; out of scope for D28, which is about message loss, not goroutine leaks. If
 needs fixing, `Run` returning is the wrong signal to design around — the real fix is a
 `select` with a `ctx.Done()` case inside `ReadPump`'s own send, or draining `Unregister` in a
 second goroutine alongside `drainAndClose` until all `ReadPump`s have exited.
+
+## From Phase 1C execution (integration test)
+
+**D32 — production Postgres image is amd64-only and 3.5 years stale.**
+`infra/docker-compose.yml:12` pins `timescale/timescaledb-ha:pg15-latest`. Docker Hub
+registry API reports a single-platform manifest, `architecture: amd64`, `tag_last_pushed
+2023-04-24T08:00:26Z`. On this arm64 development machine it runs under Docker Desktop's
+Rosetta-based emulation — confirmed via `docker image inspect …
+--format '{{.Architecture}}'` returning `amd64` against a host reporting `arm64`
+(`docker info --format '{{.Architecture}}'` → `aarch64`). In practice the emulation cost was
+far smaller than expected (~3s container-ready time, not the 20-60s budgeted), but the
+staleness is still real: multi-arch tags already exist in the same repository (`pg15`,
+`pg15-ts2.28`, `pg15.18-ts2.28.3` all report `['amd64','arm64']`). Changing the pin is an
+infrastructure change (`CLAUDE.md` §5.3, Phase 5+); recorded, not scheduled.
+
+**D33 — `D21` is cited in `CLAUDE.md` but has no `IDEAS.md` entry.**
+`CLAUDE.md` §3.1's Redis row cites "(D21)" for the write-only finding, and §4's "Tracked but
+not scheduled" cites `D21` again. `IDEAS.md` has no `D21` — its identifiers jump D19 → D26.
+The finding itself is real and independently re-verified while building the integration test
+(`grep -rn "GetDeviceState\|GetDeviceLocation" backend/` still finds no external caller, and
+`cache.CacheStore` — `cache/interface.go:18-27` — declares no read-back method). Either add
+the entry or drop the citation. Same section, unrelated: the Redis row's last sentence is
+duplicated verbatim — "Pool size hard-coded 50 in `cache/redis.go:28`; `REDIS_POOL_SIZE`
+unused." appears twice in `CLAUDE.md:164`.
+
+**D34 — adding a test-only dependency bumped two production dependencies' minimum versions.**
+`go get github.com/testcontainers/testcontainers-go/...` (for the integration test) forced
+`go.mod`'s minimum versions of `github.com/jackc/pgx/v5` (v5.4.3 → v5.9.2) and
+`github.com/redis/go-redis/v9` (v9.0.5 → v9.7.3) upward, via Go's minimal-version-selection
+resolving the *highest* version any module in the graph requires — testcontainers' postgres
+and redis submodules depend on newer minimums of both than this repo's own production code
+did. The `go` directive itself was also raised, 1.23.0 → 1.25.0. All of `go build ./...`,
+`go vet ./...`, and the full unit suite (`go test ./... -race -count=1`) stayed green after
+the bump, so nothing is known to be broken by it — but it means "testcontainers is test-only"
+is not quite true at the `go.mod` level: the same two packages that appear in production
+import paths (`database.New`, `cache.New`) now resolve to newer minor/patch versions than
+before this change, even though no production source line changed. Worth a deliberate look
+before the next dependency audit, not a defect to fix now.
