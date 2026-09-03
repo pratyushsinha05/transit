@@ -92,7 +92,8 @@ func main() {
 
 	// 6. Initialize Hub
 	wsHub := hub.New()
-	go wsHub.Run()
+	hubCtx, hubCancel := context.WithCancel(context.Background())
+	go wsHub.Run(hubCtx)
 	log.Println("WebSocket hub started")
 
 	ingestService := services.NewIngestService(locRepo, deviceRouteRepo, deviceCache, wsHub)
@@ -171,8 +172,11 @@ func main() {
 	defer cancel()
 
 	if err := e.Shutdown(ctx); err != nil {
-		e.Logger.Fatal(err)
+		log.Printf("Echo shutdown error: %v", err)
 	}
+
+	hubCancel()
+	wsHub.Shutdown()
 
 	log.Println("Server stopped")
 }

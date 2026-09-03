@@ -1,6 +1,7 @@
 package hub
 
 import (
+	"context"
 	"sync"
 )
 
@@ -10,6 +11,7 @@ type Hub struct {
 	Register   chan *Client
 	Unregister chan *Client
 	mu         sync.RWMutex
+	done       chan struct{}
 }
 
 func New() *Hub {
@@ -18,12 +20,22 @@ func New() *Hub {
 		Register:   make(chan *Client),
 		Unregister: make(chan *Client),
 		Clients:    make(map[*Client]bool),
+		done:       make(chan struct{}),
 	}
 }
 
-func (h *Hub) Run() {
+func (h *Hub) Run(ctx context.Context) {
 	for {
 		select {
+		case <-ctx.Done():
+			h.mu.Lock()
+			for client := range h.Clients {
+				close(client.Send)
+				delete(h.Clients, client)
+			}
+			h.mu.Unlock()
+			close(h.done)
+			return
 		case client := <-h.Register:
 			h.mu.Lock()
 			h.Clients[client] = true
@@ -51,4 +63,9 @@ func (h *Hub) Run() {
 			h.mu.RUnlock()
 		}
 	}
+}
+
+// Shutdown blocks until Run has drained all clients and exited.
+func (h *Hub) Shutdown() {
+	<-h.done
 }
