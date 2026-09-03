@@ -7,6 +7,27 @@ import (
 	"time"
 )
 
+// waitForClients polls h.Clients under RLock until the count reaches want,
+// bounded by a 2-second timeout. Returns the observed count on timeout.
+func waitForClients(t *testing.T, h *Hub, want int) {
+	t.Helper()
+	deadline := time.After(2 * time.Second)
+	for {
+		h.mu.RLock()
+		n := len(h.Clients)
+		h.mu.RUnlock()
+		if n == want {
+			return
+		}
+		select {
+		case <-deadline:
+			t.Fatalf("timed out waiting for %d clients, got %d", want, n)
+		default:
+			// yield to the hub goroutine
+		}
+	}
+}
+
 // TestHubShutdown verifies that Hub.Run exits cleanly when its
 // context is cancelled, closes all client Send channels, drains all clients,
 // and that Shutdown() blocks until Run has fully returned.
@@ -29,18 +50,13 @@ func TestHubShutdown(t *testing.T) {
 		h.Register <- clients[i]
 	}
 
-	// Broadcast one message so the hub exercises the active path
+	// Wait deterministically for all three registrations to be processed
+	waitForClients(t, h, 3)
+
+	// Broadcast one message so the hub exercises the active path.
+	// After waitForClients returned, the hub's select loop is idle and will
+	// pick up the broadcast on the next iteration.
 	h.Broadcast <- "test-message"
-
-	// Allow hub to process registration and broadcast
-	time.Sleep(20 * time.Millisecond)
-
-	// Verify clients are registered
-	h.mu.RLock()
-	if len(h.Clients) != 3 {
-		t.Fatalf("expected 3 clients, got %d", len(h.Clients))
-	}
-	h.mu.RUnlock()
 
 	// Cancel context to initiate shutdown
 	cancel()
