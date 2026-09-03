@@ -53,6 +53,9 @@ func CalculateHexAtResolution(lat, lng float64, resolution int) string {
 	return cell.String()
 }
 
+// Phase4Reserved: reserved for Phase 4 geofence-event wiring (CLAUDE.md §2).
+// Zero callers today. Do not delete — Phase 4 will wire this onto the request path.
+//
 // IsAtStop checks if a bus is at a stop using H3 hex comparison
 // This is a fast O(1) check - both points in same hex means "at stop"
 func (s *GeofencingService) IsAtStop(busLat, busLng, stopLat, stopLng float64) bool {
@@ -61,6 +64,9 @@ func (s *GeofencingService) IsAtStop(busLat, busLng, stopLat, stopLng float64) b
 	return busHex != "" && stopHex != "" && busHex == stopHex
 }
 
+// Phase4Reserved: reserved for Phase 4 geofence-event wiring (CLAUDE.md §2).
+// Zero callers today. Do not delete — Phase 4 will wire this onto the request path.
+//
 // IsAtStopWithHysteresis checks if bus is at stop with hysteresis to prevent flickering
 // - Bus must be in same hex as stop
 // - If previously at stop, allow 1-ring buffer before considering "departed"
@@ -162,6 +168,9 @@ func (s *GeofencingService) FindNearbyStops(ctx context.Context, lat, lng float6
 	return s.stopRepo.GetNearby(ctx, lat, lng, radiusMeters)
 }
 
+// Phase4Reserved: reserved for Phase 4 geofence-event wiring (CLAUDE.md §2).
+// Zero callers today. Do not delete — Phase 4 will wire this onto the request path.
+//
 // DetectArrival checks if a bus has arrived at a stop based on location change
 // Arrival is detected when:
 // - Bus was NOT at stop in previous location
@@ -177,6 +186,9 @@ func (s *GeofencingService) DetectArrival(oldLoc, newLoc *models.Location, stop 
 	return !wasAtStop && nowAtStop
 }
 
+// Phase4Reserved: reserved for Phase 4 geofence-event wiring (CLAUDE.md §2).
+// Zero callers today. Do not delete — Phase 4 will wire this onto the request path.
+//
 // DetectDeparture checks if a bus has departed from a stop
 func (s *GeofencingService) DetectDeparture(oldLoc, newLoc *models.Location, stop *models.Stop) bool {
 	if oldLoc == nil || newLoc == nil || stop == nil {

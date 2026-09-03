@@ -130,6 +130,9 @@ func (s *ArrivalsService) isApproaching(busLat, busLng, stopLat, stopLng float64
 	return false
 }
 
+// Phase4Reserved: reserved for Phase 4 geofence-event wiring (CLAUDE.md §2).
+// Zero callers today. Do not delete — Phase 4 will wire this onto the request path.
+//
 // CalculateETAWithTraffic calculates ETA considering traffic conditions
 // For now, this is a placeholder that uses default speed adjustment
 func (s *ArrivalsService) CalculateETAWithTraffic(fromLat, fromLng, toLat, toLng, currentSpeed float64) int {
@@ -145,6 +148,9 @@ func (s *ArrivalsService) CalculateETAWithTraffic(fromLat, fromLng, toLat, toLng
 	return trafficAdjustedETA
 }
 
+// Phase4Reserved: reserved for Phase 4 geofence-event wiring (CLAUDE.md §2).
+// Zero callers today. Do not delete — Phase 4 will wire this onto the request path.
+//
 // DetectArrivalEvent checks if a bus has just arrived at a stop
 func (s *ArrivalsService) DetectArrivalEvent(ctx context.Context, deviceID string, stop *models.Stop) (bool, error) {
 	// Get current and previous location
