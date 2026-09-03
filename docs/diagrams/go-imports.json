@@ -1,0 +1,109 @@
+{
+  "direction": "TB",
+  "nodes": [
+    {
+      "id": "transit-backend/cmd/server",
+      "label": "cmd/server",
+      "group": "cmd"
+    },
+    {
+      "id": "transit-backend/migrations",
+      "label": "migrations"
+    },
+    {
+      "id": "transit-backend/internal/middleware",
+      "label": "internal/middleware",
+      "group": "internal"
+    },
+    {
+      "id": "transit-backend/internal/database",
+      "label": "internal/database",
+      "group": "internal"
+    },
+    {
+      "id": "transit-backend/internal/cache",
+      "label": "internal/cache",
+      "group": "internal"
+    },
+    {
+      "id": "transit-backend/internal/config",
+      "label": "internal/config",
+      "group": "internal"
+    },
+    {
+      "id": "transit-backend/internal/models",
+      "label": "internal/models",
+      "group": "internal"
+    },
+    {
+      "id": "transit-backend/internal/hub",
+      "label": "internal/hub",
+      "group": "internal"
+    },
+    {
+      "id": "transit-backend/internal/handlers",
+      "label": "internal/handlers",
+      "group": "internal"
+    },
+    {
+      "id": "transit-backend/internal/services",
+      "label": "internal/services",
+      "group": "internal"
+    },
+    {
+      "id": "transit-backend/pkg/geo",
+      "label": "pkg/geo",
+      "group": "pkg"
+    }
+  ],
+  "edges": [
+    {
+      "source": "transit-backend/cmd/server",
+      "target": "transit-backend/internal/cache"
+    },
+    {
+      "source": "transit-backend/cmd/server",
+      "target": "transit-backend/internal/database"
+    },
+    {
+      "source": "transit-backend/cmd/server",
+      "target": "transit-backend/internal/handlers"
+    },
+    {
+      "source": "transit-backend/cmd/server",
+      "target": "transit-backend/internal/middleware"
+    },
+    {
+      "source": "transit-backend/cmd/server",
+      "target": "transit-backend/migrations"
+    },
+    {
+      "source": "transit-backend/internal/cache",
+      "target": "transit-backend/internal/config"
+    },
+    {
+      "source": "transit-backend/internal/database",
+      "target": "transit-backend/internal/config"
+    },
+    {
+      "source": "transit-backend/internal/database",
+      "target": "transit-backend/internal/models"
+    },
+    {
+      "source": "transit-backend/internal/handlers",
+      "target": "transit-backend/internal/services"
+    },
+    {
+      "source": "transit-backend/internal/services",
+      "target": "transit-backend/internal/hub"
+    },
+    {
+      "source": "transit-backend/internal/services",
+      "target": "transit-backend/internal/models"
+    },
+    {
+      "source": "transit-backend/internal/services",
+      "target": "transit-backend/pkg/geo"
+    }
+  ]
+}

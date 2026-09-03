@@ -1,0 +1,37 @@
+<mxfile>
+  <diagram id="autolayout" name="Page-1">
+    <mxGraphModel dx="800" dy="600" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="devices" value="devices&#10;PK id: TEXT&#10;name: TEXT&#10;status: TEXT&#10;created_at: TIMESTAMP" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="220" y="130" width="180" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="routes" value="routes&#10;PK id: TEXT&#10;name: TEXT&#10;description: TEXT" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="230" y="290" width="160" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="stops" value="stops&#10;PK id: TEXT&#10;FK route_id: TEXT&#10;name: TEXT&#10;latitude: DECIMAL(10&#10;longitude: DECIMAL(11&#10;sequence_number: INT&#10;geom: GEOMETRY(POINT" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="0" y="360" width="180" height="170" as="geometry" />
+        </mxCell>
+        <mxCell id="location_history" value="location_history&#10;time: TIMESTAMP&#10;FK device_id: TEXT&#10;latitude: DECIMAL(10&#10;longitude: DECIMAL(11&#10;speed: FLOAT&#10;accuracy: FLOAT&#10;metadata: JSONB" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="0" y="0" width="180" height="170" as="geometry" />
+        </mxCell>
+        <mxCell id="trips" value="trips&#10;PK id: TEXT&#10;FK route_id: TEXT&#10;FK device_id: TEXT&#10;started_at: TIMESTAMP&#10;current_stop: INT&#10;status: TEXT" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="0" y="190" width="180" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="e0" value="route_id" style="edgeStyle=orthogonalEdgeStyle;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;startArrow=ERmany;startFill=0;endArrow=ERone;endFill=0;entryX=0;entryY=0.666667;entryDx=0;entryDy=0;" edge="1" parent="1" source="stops" target="routes">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="180" y="370" /><mxPoint x="210" y="370" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e1" value="device_id" style="edgeStyle=orthogonalEdgeStyle;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;startArrow=ERmany;startFill=0;endArrow=ERone;endFill=0;entryX=0;entryY=0.333333;entryDx=0;entryDy=0;" edge="1" parent="1" source="location_history" target="devices">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="180" y="150" /><mxPoint x="200" y="150" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e2" value="route_id" style="edgeStyle=orthogonalEdgeStyle;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;startArrow=ERmany;startFill=0;endArrow=ERone;endFill=0;entryX=0;entryY=0.333333;entryDx=0;entryDy=0;exitX=1;exitY=0.666667;exitDx=0;exitDy=0;" edge="1" parent="1" source="trips" target="routes">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="180" y="310" /><mxPoint x="210" y="310" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e3" value="device_id" style="edgeStyle=orthogonalEdgeStyle;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;startArrow=ERmany;startFill=0;endArrow=ERone;endFill=0;entryX=0;entryY=0.666667;entryDx=0;entryDy=0;exitX=1;exitY=0.333333;exitDx=0;exitDy=0;" edge="1" parent="1" source="trips" target="devices">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="180" y="220" /><mxPoint x="200" y="220" /></Array></mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

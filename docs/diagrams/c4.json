@@ -1,0 +1,48 @@
+{
+  "title": "Transit — Geo-telemetry Engine",
+  "levels": [
+    {
+      "name": "Context",
+      "elements": [
+        {"id": "operator", "type": "person", "label": "Browser User",
+         "desc": "Views the live map, draws routes"},
+        {"id": "device", "type": "person", "label": "Tracked Device",
+         "desc": "POSTs GPS pings"},
+        {"id": "transit", "type": "system", "label": "Transit Engine",
+         "desc": "Ingests pings, persists to Postgres, broadcasts over WebSocket",
+         "children": "Container"},
+        {"id": "osrm", "type": "external", "label": "OSRM Public Demo",
+         "desc": "router.project-osrm.org - snaps waypoints to roads"},
+        {"id": "cartocdn", "type": "external", "label": "CartoDB Tiles",
+         "desc": "basemaps.cartocdn.com - basemap tiles"},
+        {"id": "googlefonts", "type": "external", "label": "Google Fonts",
+         "desc": "fonts.googleapis.com - webfont"}
+      ],
+      "relations": [
+        {"from": "operator", "to": "transit", "label": "Views map, draws routes"},
+        {"from": "device", "to": "transit", "label": "POSTs GPS pings"},
+        {"from": "transit", "to": "osrm", "label": "Snaps waypoints to roads"},
+        {"from": "transit", "to": "cartocdn", "label": "Loads basemap tiles"},
+        {"from": "transit", "to": "googlefonts", "label": "Loads webfont"}
+      ]
+    },
+    {
+      "name": "Container",
+      "elements": [
+        {"id": "go-binary", "type": "container", "label": "Go Backend", "tech": "Go / Echo",
+         "desc": "HTTP handlers, services, WebSocket hub"},
+        {"id": "spa", "type": "container", "label": "Single-Page App", "tech": "React 19 + Vite",
+         "desc": "Leaflet map, Zustand store"},
+        {"id": "postgres", "type": "database", "label": "PostgreSQL", "tech": "TimescaleDB + PostGIS",
+         "desc": "location_history + 4 more tables"},
+        {"id": "redis", "type": "database", "label": "Redis", "tech": "redis:7-alpine",
+         "desc": "Hot per-device location cache"}
+      ],
+      "relations": [
+        {"from": "spa", "to": "go-binary", "label": "HTTP + WebSocket"},
+        {"from": "go-binary", "to": "postgres", "label": "reads & writes"},
+        {"from": "go-binary", "to": "redis", "label": "hot-path cache"}
+      ]
+    }
+  ]
+}

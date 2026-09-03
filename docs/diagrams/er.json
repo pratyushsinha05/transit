@@ -1,0 +1,66 @@
+{
+  "direction": "TB",
+  "nodes": [
+    {
+      "id": "devices",
+      "label": "devices\nPK id: TEXT\nname: TEXT\nstatus: TEXT\ncreated_at: TIMESTAMP",
+      "style": "rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fillColor=#dae8fc;strokeColor=#6c8ebf;",
+      "width": 180,
+      "height": 110
+    },
+    {
+      "id": "routes",
+      "label": "routes\nPK id: TEXT\nname: TEXT\ndescription: TEXT",
+      "style": "rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fillColor=#dae8fc;strokeColor=#6c8ebf;",
+      "width": 160,
+      "height": 90
+    },
+    {
+      "id": "stops",
+      "label": "stops\nPK id: TEXT\nFK route_id: TEXT\nname: TEXT\nlatitude: DECIMAL(10\nlongitude: DECIMAL(11\nsequence_number: INT\ngeom: GEOMETRY(POINT",
+      "style": "rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fillColor=#dae8fc;strokeColor=#6c8ebf;",
+      "width": 180,
+      "height": 170
+    },
+    {
+      "id": "location_history",
+      "label": "location_history\ntime: TIMESTAMP\nFK device_id: TEXT\nlatitude: DECIMAL(10\nlongitude: DECIMAL(11\nspeed: FLOAT\naccuracy: FLOAT\nmetadata: JSONB",
+      "style": "rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fillColor=#dae8fc;strokeColor=#6c8ebf;",
+      "width": 180,
+      "height": 170
+    },
+    {
+      "id": "trips",
+      "label": "trips\nPK id: TEXT\nFK route_id: TEXT\nFK device_id: TEXT\nstarted_at: TIMESTAMP\ncurrent_stop: INT\nstatus: TEXT",
+      "style": "rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fillColor=#dae8fc;strokeColor=#6c8ebf;",
+      "width": 180,
+      "height": 150
+    }
+  ],
+  "edges": [
+    {
+      "source": "stops",
+      "target": "routes",
+      "label": "route_id",
+      "style": "edgeStyle=orthogonalEdgeStyle;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;startArrow=ERmany;startFill=0;endArrow=ERone;endFill=0;"
+    },
+    {
+      "source": "location_history",
+      "target": "devices",
+      "label": "device_id",
+      "style": "edgeStyle=orthogonalEdgeStyle;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;startArrow=ERmany;startFill=0;endArrow=ERone;endFill=0;"
+    },
+    {
+      "source": "trips",
+      "target": "routes",
+      "label": "route_id",
+      "style": "edgeStyle=orthogonalEdgeStyle;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;startArrow=ERmany;startFill=0;endArrow=ERone;endFill=0;"
+    },
+    {
+      "source": "trips",
+      "target": "devices",
+      "label": "device_id",
+      "style": "edgeStyle=orthogonalEdgeStyle;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;startArrow=ERmany;startFill=0;endArrow=ERone;endFill=0;"
+    }
+  ]
+}

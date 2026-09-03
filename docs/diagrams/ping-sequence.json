@@ -1,0 +1,43 @@
+{
+  "title": "Life of one GPS ping (POST /api/location -> moving Leaflet marker)",
+  "participants": [
+    {"id": "device", "label": "Device", "actor": true},
+    {"id": "handler", "label": "LocationHandler"},
+    {"id": "service", "label": "IngestService"},
+    {"id": "repo", "label": "Repository"},
+    {"id": "pg", "label": "PostgreSQL"},
+    {"id": "redis", "label": "Redis"},
+    {"id": "hub", "label": "Hub"},
+    {"id": "client", "label": "Client (WritePump)"},
+    {"id": "wsc", "label": "websocketClient.ts"},
+    {"id": "mh", "label": "messageHandler.ts"},
+    {"id": "store", "label": "Zustand store"},
+    {"id": "marker", "label": "BusMarkers.tsx"}
+  ],
+  "messages": [
+    {"from": "device", "to": "handler", "label": "POST /api/location {device_id, latitude, longitude, speed, accuracy}"},
+    {"note": "validates DeviceID non-empty, lat in [-90,90], lng in [-180,180], speed in [0,350] (handlers/location.go:34-46)", "over": "handler"},
+    {"from": "handler", "to": "service", "label": "IngestLocation(loc)  (services/ingest.go:29-81)"},
+    {"from": "service", "to": "repo", "label": "DeviceRouteRepository.GetActiveRouteID(deviceID)  (database/device_routes.go:29-44)"},
+    {"from": "repo", "to": "pg", "label": "SELECT route_id FROM trips WHERE device_id=$1 AND status='IN_PROGRESS' ORDER BY started_at DESC LIMIT 1"},
+    {"from": "pg", "to": "repo", "label": "route_id", "return": true},
+    {"from": "repo", "to": "service", "label": "route_id", "return": true},
+    {"from": "service", "to": "repo", "label": "LocationRepository.Insert(loc)  (database/locations.go:47-75)"},
+    {"from": "repo", "to": "pg", "label": "INSERT INTO location_history (time, device_id, latitude, longitude, speed, accuracy, hex_res9) VALUES (...)  (locations.go:60-63)"},
+    {"note": "BEFORE INSERT trigger trg_location_geom runs update_location_geom() -> sets geom (003_add_h3_postgis.sql:97-105,108-118)", "over": "pg"},
+    {"from": "pg", "to": "repo", "label": "ok", "return": true},
+    {"from": "repo", "to": "service", "label": "ok", "return": true},
+    {"from": "service", "to": "redis", "label": "DeviceCache.SetDeviceState(deviceID, loc)  [hot path]  (cache/redis.go:184-205)"},
+    {"from": "redis", "to": "service", "label": "ok", "return": true},
+    {"from": "service", "to": "hub", "label": "Broadcast <- Message{...}  [buffered chan, size 256]  (hub/hub.go:17; services/ingest.go:21)"},
+    {"from": "service", "to": "handler", "label": "nil", "return": true},
+    {"from": "handler", "to": "device", "label": "200 {\"status\":\"ok\"}  (handlers/location.go:57)", "return": true},
+    {"note": "Run() goroutine (already running, started main.go:95) dequeues Broadcast, fans out to every registered client (hub/hub.go:38-51); silent-drop default: branch if a client buffer is full (hub.go:43-49)", "over": "hub"},
+    {"from": "hub", "to": "client", "label": "send on per-client channel", "async": true},
+    {"from": "client", "to": "wsc", "label": "WritePump writes JSON frame over the socket  (hub/client.go:66-93)", "async": true},
+    {"from": "wsc", "to": "mh", "label": "handleMessage(raw)  (messageHandler.ts:20-48)"},
+    {"from": "mh", "to": "mh", "label": "handleLocationUpdate(raw)  (messageHandler.ts:61-92)"},
+    {"from": "mh", "to": "store", "label": "updateBus(deviceID, loc)  (store/slices/busLocations.ts:18)"},
+    {"from": "store", "to": "marker", "label": "re-render: <BusMarkers/> reads buses, layerVisibility, hiddenRoutes  (Map/BusMarkers.tsx:28-30)", "async": true}
+  ]
+}

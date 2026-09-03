@@ -1,0 +1,553 @@
+{
+  "direction": "TB",
+  "nodes": [
+    {
+      "id": "App",
+      "label": "App",
+      "width": 120
+    },
+    {
+      "id": "main",
+      "label": "main",
+      "width": 120
+    },
+    {
+      "id": "types/domain",
+      "label": "types/domain",
+      "group": "types",
+      "width": 120
+    },
+    {
+      "id": "config/wsConfig",
+      "label": "config/wsConfig",
+      "group": "config",
+      "width": 144
+    },
+    {
+      "id": "config/apiConfig",
+      "label": "config/apiConfig",
+      "group": "config",
+      "width": 152
+    },
+    {
+      "id": "components/Sidebar/ArrivalCard",
+      "label": "components/Sidebar/ArrivalCard",
+      "group": "components/Sidebar",
+      "width": 264
+    },
+    {
+      "id": "components/Sidebar/OperationsPanel",
+      "label": "components/Sidebar/OperationsPanel",
+      "group": "components/Sidebar",
+      "width": 296
+    },
+    {
+      "id": "components/Sidebar/StopDetails",
+      "label": "components/Sidebar/StopDetails",
+      "group": "components/Sidebar",
+      "width": 264
+    },
+    {
+      "id": "components/Sidebar/ArrivalsList",
+      "label": "components/Sidebar/ArrivalsList",
+      "group": "components/Sidebar",
+      "width": 272
+    },
+    {
+      "id": "components/Sidebar/RouteCreatorPanel",
+      "label": "components/Sidebar/RouteCreatorPanel",
+      "group": "components/Sidebar",
+      "width": 312
+    },
+    {
+      "id": "components/Sidebar/Sidebar",
+      "label": "components/Sidebar/Sidebar",
+      "group": "components/Sidebar",
+      "width": 232
+    },
+    {
+      "id": "components/Footer/TelemetryTray",
+      "label": "components/Footer/TelemetryTray",
+      "group": "components/Footer",
+      "width": 272
+    },
+    {
+      "id": "components/Map/MapContainer",
+      "label": "components/Map/MapContainer",
+      "group": "components/Map",
+      "width": 240
+    },
+    {
+      "id": "components/Map/RouteCreatorMarkers",
+      "label": "components/Map/RouteCreatorMarkers",
+      "group": "components/Map",
+      "width": 296
+    },
+    {
+      "id": "components/Map/StopMarkers",
+      "label": "components/Map/StopMarkers",
+      "group": "components/Map",
+      "width": 232
+    },
+    {
+      "id": "components/Map/BusMarkers",
+      "label": "components/Map/BusMarkers",
+      "group": "components/Map",
+      "width": 224
+    },
+    {
+      "id": "components/Map/RoutePolyline",
+      "label": "components/Map/RoutePolyline",
+      "group": "components/Map",
+      "width": 248
+    },
+    {
+      "id": "components/Map/MapClickHandler",
+      "label": "components/Map/MapClickHandler",
+      "group": "components/Map",
+      "width": 264
+    },
+    {
+      "id": "components/Map/MapCameraHandler",
+      "label": "components/Map/MapCameraHandler",
+      "group": "components/Map",
+      "width": 272
+    },
+    {
+      "id": "components/Header/ConnectionStatus",
+      "label": "components/Header/ConnectionStatus",
+      "group": "components/Header",
+      "width": 296
+    },
+    {
+      "id": "hooks/useHealthCheck",
+      "label": "hooks/useHealthCheck",
+      "group": "hooks",
+      "width": 184
+    },
+    {
+      "id": "hooks/useArrivals",
+      "label": "hooks/useArrivals",
+      "group": "hooks",
+      "width": 160
+    },
+    {
+      "id": "hooks/useRoutes",
+      "label": "hooks/useRoutes",
+      "group": "hooks",
+      "width": 144
+    },
+    {
+      "id": "hooks/useWebSocket",
+      "label": "hooks/useWebSocket",
+      "group": "hooks",
+      "width": 168
+    },
+    {
+      "id": "hooks/useStops",
+      "label": "hooks/useStops",
+      "group": "hooks",
+      "width": 136
+    },
+    {
+      "id": "services/errorHandler",
+      "label": "services/errorHandler",
+      "group": "services",
+      "width": 192
+    },
+    {
+      "id": "services/logger",
+      "label": "services/logger",
+      "group": "services",
+      "width": 144
+    },
+    {
+      "id": "services/websocket/messageHandler",
+      "label": "services/websocket/messageHandler",
+      "group": "services/websocket",
+      "width": 288
+    },
+    {
+      "id": "services/websocket/websocketClient",
+      "label": "services/websocket/websocketClient",
+      "group": "services/websocket",
+      "width": 296
+    },
+    {
+      "id": "services/api/routes",
+      "label": "services/api/routes",
+      "group": "services/api",
+      "width": 176
+    },
+    {
+      "id": "services/api/osrm",
+      "label": "services/api/osrm",
+      "group": "services/api",
+      "width": 160
+    },
+    {
+      "id": "services/api/createRoute",
+      "label": "services/api/createRoute",
+      "group": "services/api",
+      "width": 216
+    },
+    {
+      "id": "services/api/client",
+      "label": "services/api/client",
+      "group": "services/api",
+      "width": 176
+    },
+    {
+      "id": "services/api/stops",
+      "label": "services/api/stops",
+      "group": "services/api",
+      "width": 168
+    },
+    {
+      "id": "services/api/health",
+      "label": "services/api/health",
+      "group": "services/api",
+      "width": 176
+    },
+    {
+      "id": "services/api/transformers",
+      "label": "services/api/transformers",
+      "group": "services/api",
+      "width": 224
+    },
+    {
+      "id": "services/api/arrivals",
+      "label": "services/api/arrivals",
+      "group": "services/api",
+      "width": 192
+    },
+    {
+      "id": "store/index",
+      "label": "store/index",
+      "group": "store",
+      "width": 120
+    },
+    {
+      "id": "store/slices/busLocations",
+      "label": "store/slices/busLocations",
+      "group": "store/slices",
+      "width": 224
+    },
+    {
+      "id": "store/slices/connection",
+      "label": "store/slices/connection",
+      "group": "store/slices",
+      "width": 208
+    },
+    {
+      "id": "store/slices/stops",
+      "label": "store/slices/stops",
+      "group": "store/slices",
+      "width": 168
+    },
+    {
+      "id": "store/slices/ui",
+      "label": "store/slices/ui",
+      "group": "store/slices",
+      "width": 144
+    },
+    {
+      "id": "store/slices/arrivals",
+      "label": "store/slices/arrivals",
+      "group": "store/slices",
+      "width": 192
+    }
+  ],
+  "edges": [
+    {
+      "source": "App",
+      "target": "components/Footer/TelemetryTray"
+    },
+    {
+      "source": "App",
+      "target": "components/Header/ConnectionStatus"
+    },
+    {
+      "source": "App",
+      "target": "components/Map/MapContainer"
+    },
+    {
+      "source": "App",
+      "target": "components/Sidebar/OperationsPanel"
+    },
+    {
+      "source": "App",
+      "target": "components/Sidebar/Sidebar"
+    },
+    {
+      "source": "components/Footer/TelemetryTray",
+      "target": "store/index"
+    },
+    {
+      "source": "components/Header/ConnectionStatus",
+      "target": "hooks/useHealthCheck"
+    },
+    {
+      "source": "components/Header/ConnectionStatus",
+      "target": "hooks/useWebSocket"
+    },
+    {
+      "source": "components/Map/MapContainer",
+      "target": "components/Map/BusMarkers"
+    },
+    {
+      "source": "components/Map/MapContainer",
+      "target": "components/Map/MapCameraHandler"
+    },
+    {
+      "source": "components/Map/MapContainer",
+      "target": "components/Map/MapClickHandler"
+    },
+    {
+      "source": "components/Map/MapContainer",
+      "target": "components/Map/RouteCreatorMarkers"
+    },
+    {
+      "source": "components/Map/MapContainer",
+      "target": "components/Map/RoutePolyline"
+    },
+    {
+      "source": "components/Map/MapContainer",
+      "target": "components/Map/StopMarkers"
+    },
+    {
+      "source": "components/Sidebar/OperationsPanel",
+      "target": "hooks/useRoutes"
+    },
+    {
+      "source": "components/Sidebar/Sidebar",
+      "target": "hooks/useStops"
+    },
+    {
+      "source": "components/Sidebar/Sidebar",
+      "target": "components/Sidebar/ArrivalsList"
+    },
+    {
+      "source": "components/Sidebar/Sidebar",
+      "target": "components/Sidebar/RouteCreatorPanel"
+    },
+    {
+      "source": "store/index",
+      "target": "store/slices/arrivals"
+    },
+    {
+      "source": "store/index",
+      "target": "store/slices/busLocations"
+    },
+    {
+      "source": "store/index",
+      "target": "store/slices/connection"
+    },
+    {
+      "source": "store/index",
+      "target": "store/slices/stops"
+    },
+    {
+      "source": "store/index",
+      "target": "store/slices/ui"
+    },
+    {
+      "source": "hooks/useHealthCheck",
+      "target": "store/index"
+    },
+    {
+      "source": "hooks/useHealthCheck",
+      "target": "services/api/health"
+    },
+    {
+      "source": "hooks/useWebSocket",
+      "target": "services/websocket/websocketClient"
+    },
+    {
+      "source": "components/Map/BusMarkers",
+      "target": "store/index"
+    },
+    {
+      "source": "components/Map/MapCameraHandler",
+      "target": "store/index"
+    },
+    {
+      "source": "components/Map/MapClickHandler",
+      "target": "store/index"
+    },
+    {
+      "source": "components/Map/RouteCreatorMarkers",
+      "target": "store/index"
+    },
+    {
+      "source": "components/Map/RouteCreatorMarkers",
+      "target": "services/api/osrm"
+    },
+    {
+      "source": "components/Map/RoutePolyline",
+      "target": "hooks/useRoutes"
+    },
+    {
+      "source": "components/Map/StopMarkers",
+      "target": "hooks/useArrivals"
+    },
+    {
+      "source": "components/Map/StopMarkers",
+      "target": "hooks/useStops"
+    },
+    {
+      "source": "services/api/osrm",
+      "target": "services/logger"
+    },
+    {
+      "source": "hooks/useRoutes",
+      "target": "store/index"
+    },
+    {
+      "source": "hooks/useRoutes",
+      "target": "services/api/routes"
+    },
+    {
+      "source": "hooks/useArrivals",
+      "target": "store/index"
+    },
+    {
+      "source": "hooks/useArrivals",
+      "target": "services/api/arrivals"
+    },
+    {
+      "source": "hooks/useStops",
+      "target": "store/index"
+    },
+    {
+      "source": "hooks/useStops",
+      "target": "services/api/stops"
+    },
+    {
+      "source": "components/Sidebar/ArrivalCard",
+      "target": "types/domain"
+    },
+    {
+      "source": "components/Sidebar/ArrivalsList",
+      "target": "hooks/useArrivals"
+    },
+    {
+      "source": "components/Sidebar/ArrivalsList",
+      "target": "components/Sidebar/ArrivalCard"
+    },
+    {
+      "source": "components/Sidebar/RouteCreatorPanel",
+      "target": "store/index"
+    },
+    {
+      "source": "components/Sidebar/RouteCreatorPanel",
+      "target": "services/api/createRoute"
+    },
+    {
+      "source": "services/api/createRoute",
+      "target": "types/domain"
+    },
+    {
+      "source": "services/api/createRoute",
+      "target": "services/api/client"
+    },
+    {
+      "source": "components/Sidebar/StopDetails",
+      "target": "types/domain"
+    },
+    {
+      "source": "services/api/arrivals",
+      "target": "services/api/client"
+    },
+    {
+      "source": "services/api/arrivals",
+      "target": "services/api/transformers"
+    },
+    {
+      "source": "services/api/health",
+      "target": "services/api/client"
+    },
+    {
+      "source": "services/api/routes",
+      "target": "services/api/client"
+    },
+    {
+      "source": "services/api/routes",
+      "target": "services/api/transformers"
+    },
+    {
+      "source": "services/api/stops",
+      "target": "services/api/client"
+    },
+    {
+      "source": "services/api/stops",
+      "target": "services/api/transformers"
+    },
+    {
+      "source": "services/websocket/websocketClient",
+      "target": "services/websocket/messageHandler"
+    },
+    {
+      "source": "main",
+      "target": "App"
+    },
+    {
+      "source": "services/api/client",
+      "target": "services/logger"
+    },
+    {
+      "source": "services/api/client",
+      "target": "config/apiConfig"
+    },
+    {
+      "source": "services/api/transformers",
+      "target": "types/domain"
+    },
+    {
+      "source": "services/api/transformers",
+      "target": "services/logger"
+    },
+    {
+      "source": "services/api/transformers",
+      "target": "config/apiConfig"
+    },
+    {
+      "source": "services/errorHandler",
+      "target": "services/logger"
+    },
+    {
+      "source": "services/websocket/messageHandler",
+      "target": "store/index"
+    },
+    {
+      "source": "services/websocket/messageHandler",
+      "target": "services/logger"
+    },
+    {
+      "source": "services/websocket/messageHandler",
+      "target": "config/wsConfig"
+    },
+    {
+      "source": "store/slices/arrivals",
+      "target": "types/domain"
+    },
+    {
+      "source": "store/slices/busLocations",
+      "target": "types/domain"
+    },
+    {
+      "source": "store/slices/connection",
+      "target": "types/domain"
+    },
+    {
+      "source": "store/slices/stops",
+      "target": "types/domain"
+    },
+    {
+      "source": "store/slices/ui",
+      "target": "types/domain"
+    }
+  ],
+  "nodesep": 0.6,
+  "ranksep": 0.9
+}

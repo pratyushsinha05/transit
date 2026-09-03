@@ -1,0 +1,88 @@
+<mxfile>
+  <diagram id="autolayout" name="Page-1">
+    <mxGraphModel dx="800" dy="600" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="group_0" value="cmd" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#6c8ebf;fontColor=#6c8ebf;verticalAlign=top;fontStyle=2;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="456" y="6" width="168" height="108" as="geometry"/>
+        </mxCell>
+        <mxCell id="group_1" value="internal" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#82b366;fontColor=#82b366;verticalAlign=top;fontStyle=2;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="6" y="126" width="448" height="298" as="geometry"/>
+        </mxCell>
+        <mxCell id="group_2" value="pkg" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#d79b00;fontColor=#d79b00;verticalAlign=top;fontStyle=2;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="456" y="316" width="168" height="108" as="geometry"/>
+        </mxCell>
+        <mxCell id="transit-backend/cmd/server" value="cmd/server" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="group_0">
+          <mxGeometry x="24" y="24" width="120" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="transit-backend/migrations" value="migrations" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="480" y="150" width="120" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="transit-backend/internal/middleware" value="internal/middleware" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="group_1">
+          <mxGeometry x="304" y="24" width="120" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="transit-backend/internal/database" value="internal/database" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="group_1">
+          <mxGeometry x="164" y="114" width="120" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="transit-backend/internal/cache" value="internal/cache" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="group_1">
+          <mxGeometry x="304" y="114" width="120" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="transit-backend/internal/config" value="internal/config" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="group_1">
+          <mxGeometry x="304" y="214" width="120" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="transit-backend/internal/models" value="internal/models" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="group_1">
+          <mxGeometry x="164" y="214" width="120" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="transit-backend/internal/hub" value="internal/hub" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="group_1">
+          <mxGeometry x="24" y="214" width="120" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="transit-backend/internal/handlers" value="internal/handlers" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="group_1">
+          <mxGeometry x="94" y="24" width="120" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="transit-backend/internal/services" value="internal/services" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="group_1">
+          <mxGeometry x="24" y="114" width="120" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="transit-backend/pkg/geo" value="pkg/geo" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="group_2">
+          <mxGeometry x="24" y="24" width="120" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="e0" value="" style="html=1;rounded=0;" edge="1" parent="1" source="transit-backend/cmd/server" target="transit-backend/internal/cache">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="460" y="70"/><mxPoint x="450" y="70"/><mxPoint x="450" y="70"/><mxPoint x="450" y="70"/><mxPoint x="450" y="270"/><mxPoint x="450" y="270"/><mxPoint x="450" y="270"/><mxPoint x="440" y="270"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e1" value="" style="html=1;rounded=0;" edge="1" parent="1" source="transit-backend/cmd/server" target="transit-backend/internal/database">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="390" y="60"/><mxPoint x="260" y="60"/><mxPoint x="260" y="60"/><mxPoint x="260" y="60"/><mxPoint x="260" y="230"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e2" value="" style="html=1;rounded=0;" edge="1" parent="1" source="transit-backend/cmd/server" target="transit-backend/internal/handlers">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="370" y="40"/><mxPoint x="160" y="40"/><mxPoint x="160" y="40"/><mxPoint x="160" y="40"/><mxPoint x="160" y="140"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e3" value="" style="html=1;rounded=0;" edge="1" parent="1" source="transit-backend/cmd/server" target="transit-backend/internal/middleware">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="430" y="80"/><mxPoint x="370" y="80"/><mxPoint x="370" y="80"/><mxPoint x="370" y="80"/><mxPoint x="370" y="140"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e4" value="" style="html=1;rounded=0;" edge="1" parent="1" source="transit-backend/cmd/server" target="transit-backend/migrations">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="540" y="90"/><mxPoint x="540" y="140"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e5" value="" style="html=1;rounded=0;" edge="1" parent="1" source="transit-backend/internal/cache" target="transit-backend/internal/config">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="370" y="300"/><mxPoint x="370" y="330"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e6" value="" style="html=1;rounded=0;" edge="1" parent="1" source="transit-backend/internal/database" target="transit-backend/internal/config">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="300" y="270"/><mxPoint x="300" y="270"/><mxPoint x="300" y="270"/><mxPoint x="300" y="270"/><mxPoint x="300" y="370"/><mxPoint x="300" y="370"/><mxPoint x="300" y="370"/><mxPoint x="300" y="370"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e7" value="" style="html=1;rounded=0;" edge="1" parent="1" source="transit-backend/internal/database" target="transit-backend/internal/models">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="230" y="300"/><mxPoint x="230" y="330"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e8" value="" style="html=1;rounded=0;" edge="1" parent="1" source="transit-backend/internal/handlers" target="transit-backend/internal/services">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="130" y="210"/><mxPoint x="130" y="230"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e9" value="" style="html=1;rounded=0;" edge="1" parent="1" source="transit-backend/internal/services" target="transit-backend/internal/hub">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="70" y="300"/><mxPoint x="70" y="330"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e10" value="" style="html=1;rounded=0;" edge="1" parent="1" source="transit-backend/internal/services" target="transit-backend/internal/models">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="160" y="270"/><mxPoint x="160" y="270"/><mxPoint x="160" y="270"/><mxPoint x="160" y="270"/><mxPoint x="160" y="370"/><mxPoint x="160" y="370"/><mxPoint x="160" y="370"/><mxPoint x="160" y="370"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e11" value="" style="html=1;rounded=0;" edge="1" parent="1" source="transit-backend/internal/services" target="transit-backend/pkg/geo">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="110" y="310"/><mxPoint x="110" y="320"/><mxPoint x="110" y="320"/><mxPoint x="110" y="320"/><mxPoint x="540" y="320"/><mxPoint x="540" y="320"/><mxPoint x="540" y="320"/><mxPoint x="540" y="330"/></Array></mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

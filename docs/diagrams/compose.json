@@ -1,0 +1,58 @@
+{
+  "direction": "TB",
+  "nodes": [
+    {
+      "id": "postgres",
+      "label": "postgres\ntimescale/timescaledb-ha:pg15-latest",
+      "style": "rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;",
+      "width": 160,
+      "height": 60
+    },
+    {
+      "id": "redis",
+      "label": "redis\nredis:7-alpine",
+      "style": "rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;",
+      "width": 160,
+      "height": 60
+    },
+    {
+      "id": "backend",
+      "label": "backend\ntransit-backend:latest",
+      "style": "rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;",
+      "width": 160,
+      "height": 60
+    },
+    {
+      "id": "vol:postgres_data",
+      "label": "postgres_data",
+      "style": "shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;size=15;fillColor=#f5f5f5;strokeColor=#666666;",
+      "width": 120,
+      "height": 70
+    },
+    {
+      "id": "vol:redis_data",
+      "label": "redis_data",
+      "style": "shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;size=15;fillColor=#f5f5f5;strokeColor=#666666;",
+      "width": 120,
+      "height": 70
+    }
+  ],
+  "edges": [
+    {
+      "source": "backend",
+      "target": "postgres"
+    },
+    {
+      "source": "backend",
+      "target": "redis"
+    },
+    {
+      "source": "postgres",
+      "target": "vol:postgres_data"
+    },
+    {
+      "source": "redis",
+      "target": "vol:redis_data"
+    }
+  ]
+}

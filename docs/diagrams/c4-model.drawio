@@ -1,0 +1,74 @@
+<mxfile>
+  <diagram id="context" name="Context">
+    <mxGraphModel dx="800" dy="600" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="operator" value="Browser User&#xa;[Person]&#xa;Views the live map, draws routes" style="shape=mxgraph.c4.person2;html=1;whiteSpace=wrap;fontSize=12;fontColor=#ffffff;align=center;fillColor=#083F75;strokeColor=#06315C;" vertex="1" parent="1">
+          <mxGeometry x="180" y="0" width="200" height="180" as="geometry"/>
+        </mxCell>
+        <mxCell id="device" value="Tracked Device&#xa;[Person]&#xa;POSTs GPS pings" style="shape=mxgraph.c4.person2;html=1;whiteSpace=wrap;fontSize=12;fontColor=#ffffff;align=center;fillColor=#083F75;strokeColor=#06315C;" vertex="1" parent="1">
+          <mxGeometry x="410" y="0" width="200" height="180" as="geometry"/>
+        </mxCell>
+        <UserObject label="Transit Engine&#xa;[Software System]&#xa;Ingests pings, persists to Postgres, broadcasts over WebSocket" link="data:page/id,container" id="transit">
+          <mxCell style="rounded=1;arcSize=10;html=1;whiteSpace=wrap;fontSize=12;fontColor=#ffffff;align=center;fillColor=#1061B0;strokeColor=#0D5091;" vertex="1" parent="1">
+          <mxGeometry x="280" y="250" width="240" height="120" as="geometry"/>
+        </mxCell>
+        </UserObject>
+        <mxCell id="osrm" value="OSRM Public Demo&#xa;[Software System]&#xa;router.project-osrm.org - snaps waypoints to roads" style="rounded=1;arcSize=10;html=1;whiteSpace=wrap;fontSize=12;fontColor=#ffffff;align=center;fillColor=#8C8496;strokeColor=#736782;" vertex="1" parent="1">
+          <mxGeometry x="0" y="430" width="240" height="120" as="geometry"/>
+        </mxCell>
+        <mxCell id="cartocdn" value="CartoDB Tiles&#xa;[Software System]&#xa;basemaps.cartocdn.com - basemap tiles" style="rounded=1;arcSize=10;html=1;whiteSpace=wrap;fontSize=12;fontColor=#ffffff;align=center;fillColor=#8C8496;strokeColor=#736782;" vertex="1" parent="1">
+          <mxGeometry x="280" y="430" width="240" height="120" as="geometry"/>
+        </mxCell>
+        <mxCell id="googlefonts" value="Google Fonts&#xa;[Software System]&#xa;fonts.googleapis.com - webfont" style="rounded=1;arcSize=10;html=1;whiteSpace=wrap;fontSize=12;fontColor=#ffffff;align=center;fillColor=#8C8496;strokeColor=#736782;" vertex="1" parent="1">
+          <mxGeometry x="550" y="430" width="240" height="120" as="geometry"/>
+        </mxCell>
+        <mxCell id="e0" value="Views map, draws routes" style="endArrow=blockThin;endFill=1;endSize=10;html=1;fontSize=11;fontColor=#404040;strokeColor=#828282;labelBackgroundColor=#ffffff;rounded=0;" edge="1" parent="1" source="operator" target="transit">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="330" y="180"/><mxPoint x="330" y="230"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e1" value="POSTs GPS pings" style="endArrow=blockThin;endFill=1;endSize=10;html=1;fontSize=11;fontColor=#404040;strokeColor=#828282;labelBackgroundColor=#ffffff;rounded=0;" edge="1" parent="1" source="device" target="transit">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="460" y="180"/><mxPoint x="460" y="230"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e2" value="Snaps waypoints to roads" style="endArrow=blockThin;endFill=1;endSize=10;html=1;fontSize=11;fontColor=#404040;strokeColor=#828282;labelBackgroundColor=#ffffff;rounded=0;" edge="1" parent="1" source="transit" target="osrm">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="240" y="310"/><mxPoint x="210" y="310"/><mxPoint x="210" y="310"/><mxPoint x="210" y="310"/><mxPoint x="210" y="420"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e3" value="Loads basemap tiles" style="endArrow=blockThin;endFill=1;endSize=10;html=1;fontSize=11;fontColor=#404040;strokeColor=#828282;labelBackgroundColor=#ffffff;rounded=0;" edge="1" parent="1" source="transit" target="cartocdn">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="400" y="370"/><mxPoint x="400" y="420"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e4" value="Loads webfont" style="endArrow=blockThin;endFill=1;endSize=10;html=1;fontSize=11;fontColor=#404040;strokeColor=#828282;labelBackgroundColor=#ffffff;rounded=0;" edge="1" parent="1" source="transit" target="googlefonts">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="550" y="310"/><mxPoint x="580" y="310"/><mxPoint x="580" y="310"/><mxPoint x="580" y="310"/><mxPoint x="580" y="420"/></Array></mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="container" name="Container">
+    <mxGraphModel dx="800" dy="600" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="go-binary" value="Go Backend&#xa;[Container: Go / Echo]&#xa;HTTP handlers, services, WebSocket hub" style="rounded=1;arcSize=10;html=1;whiteSpace=wrap;fontSize=12;fontColor=#ffffff;align=center;fillColor=#23A2D9;strokeColor=#0E7DAD;" vertex="1" parent="1">
+          <mxGeometry x="140" y="190" width="240" height="120" as="geometry"/>
+        </mxCell>
+        <mxCell id="spa" value="Single-Page App&#xa;[Container: React 19 + Vite]&#xa;Leaflet map, Zustand store" style="rounded=1;arcSize=10;html=1;whiteSpace=wrap;fontSize=12;fontColor=#ffffff;align=center;fillColor=#23A2D9;strokeColor=#0E7DAD;" vertex="1" parent="1">
+          <mxGeometry x="140" y="0" width="240" height="120" as="geometry"/>
+        </mxCell>
+        <mxCell id="postgres" value="PostgreSQL&#xa;[Container: TimescaleDB + PostGIS]&#xa;location_history + 4 more tables" style="shape=cylinder3;size=15;boundedLbl=1;html=1;whiteSpace=wrap;fontSize=12;fontColor=#ffffff;align=center;fillColor=#23A2D9;strokeColor=#0E7DAD;" vertex="1" parent="1">
+          <mxGeometry x="0" y="370" width="240" height="120" as="geometry"/>
+        </mxCell>
+        <mxCell id="redis" value="Redis&#xa;[Container: redis:7-alpine]&#xa;Hot per-device location cache" style="shape=cylinder3;size=15;boundedLbl=1;html=1;whiteSpace=wrap;fontSize=12;fontColor=#ffffff;align=center;fillColor=#23A2D9;strokeColor=#0E7DAD;" vertex="1" parent="1">
+          <mxGeometry x="280" y="370" width="240" height="120" as="geometry"/>
+        </mxCell>
+        <mxCell id="e0" value="HTTP + WebSocket" style="endArrow=blockThin;endFill=1;endSize=10;html=1;fontSize=11;fontColor=#404040;strokeColor=#828282;labelBackgroundColor=#ffffff;rounded=0;" edge="1" parent="1" source="spa" target="go-binary">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="260" y="120"/><mxPoint x="260" y="170"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e1" value="reads &amp; writes" style="endArrow=blockThin;endFill=1;endSize=10;html=1;fontSize=11;fontColor=#404040;strokeColor=#828282;labelBackgroundColor=#ffffff;rounded=0;" edge="1" parent="1" source="go-binary" target="postgres">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="190" y="310"/><mxPoint x="190" y="360"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e2" value="hot-path cache" style="endArrow=blockThin;endFill=1;endSize=10;html=1;fontSize=11;fontColor=#404040;strokeColor=#828282;labelBackgroundColor=#ffffff;rounded=0;" edge="1" parent="1" source="go-binary" target="redis">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="330" y="310"/><mxPoint x="330" y="360"/></Array></mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
