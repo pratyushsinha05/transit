@@ -3,4 +3,10 @@ __pycache__/
 .env
 backend.log
 *.pid
-server
+/server
+
+# Session scratch — never commit
+.claude-flow/
+docs/council/
+docs/explain/raw/
+ponytail-review.md
