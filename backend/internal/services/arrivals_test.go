@@ -21,39 +21,39 @@ func (m *mockTripRepo) GetActiveTripsBeforeZone(ctx context.Context, stopSequenc
 	return nil, nil
 }
 
-func TestArrivalsService_IsApproaching_RealCoordinates(t *testing.T) {
+func TestGeofenceService_IsApproaching_RealCoordinates(t *testing.T) {
 	geoSvc := NewGeofencingServiceWithResolution(nil, nil, 9)
-	svc := &ArrivalsService{geoService: geoSvc}
+	svc := &GeofenceService{geoService: geoSvc}
 
-	// Reference stop: Connaught Place, New Delhi
-	stopLat, stopLng := 28.6139, 77.2090
-	stopCell, err := h3.LatLngToCell(h3.NewLatLng(stopLat, stopLng), 9)
+	// Reference zone: Connaught Place, New Delhi
+	zoneLat, zoneLng := 28.6139, 77.2090
+	zoneCell, err := h3.LatLngToCell(h3.NewLatLng(zoneLat, zoneLng), 9)
 	if err != nil {
-		t.Fatalf("failed to calculate stop cell: %v", err)
+		t.Fatalf("failed to calculate zone cell: %v", err)
 	}
 
-	// 1. Center cell (bus is right at the stop) -> in k=3 ring -> approaching
-	if !svc.isApproaching(stopLat, stopLng, stopLat, stopLng) {
-		t.Errorf("bus at stop cell %s should be approaching", stopCell.String())
+	// 1. Center cell (device is right at the zone) -> in k=3 ring -> approaching
+	if !svc.isApproaching(zoneLat, zoneLng, zoneLat, zoneLng) {
+		t.Errorf("device at zone cell %s should be approaching", zoneCell.String())
 	}
 
 	// 2. 1-ring neighbor (~175m) -> in k=3 ring -> approaching
-	ring1, _ := h3.GridDisk(stopCell, 1)
+	ring1, _ := h3.GridDisk(zoneCell, 1)
 	var cellK1 h3.Cell
 	for _, c := range ring1 {
-		if c != stopCell {
+		if c != zoneCell {
 			cellK1 = c
 			break
 		}
 	}
 	llK1, _ := h3.CellToLatLng(cellK1)
-	if !svc.isApproaching(llK1.Lat, llK1.Lng, stopLat, stopLng) {
-		t.Errorf("bus in k=1 neighbor cell %s should be approaching", cellK1.String())
+	if !svc.isApproaching(llK1.Lat, llK1.Lng, zoneLat, zoneLng) {
+		t.Errorf("device in k=1 cell %s should be approaching", cellK1.String())
 	}
 
-	// 3. 3-ring cell (~500m) -> exactly on edge of k=3 ring -> approaching
-	ring3, _ := h3.GridDisk(stopCell, 3)
-	ring2, _ := h3.GridDisk(stopCell, 2)
+	// 3. 3-ring neighbor (~500m) -> in k=3 ring -> approaching
+	ring3, _ := h3.GridDisk(zoneCell, 3)
+	ring2, _ := h3.GridDisk(zoneCell, 2)
 	ring2Map := make(map[h3.Cell]bool)
 	for _, c := range ring2 {
 		ring2Map[c] = true
@@ -66,12 +66,12 @@ func TestArrivalsService_IsApproaching_RealCoordinates(t *testing.T) {
 		}
 	}
 	llK3, _ := h3.CellToLatLng(cellK3)
-	if !svc.isApproaching(llK3.Lat, llK3.Lng, stopLat, stopLng) {
-		t.Errorf("bus in k=3 cell %s should be approaching", cellK3.String())
+	if !svc.isApproaching(llK3.Lat, llK3.Lng, zoneLat, zoneLng) {
+		t.Errorf("device in k=3 cell %s should be approaching", cellK3.String())
 	}
 
-	// 4. 4-ring cell (~700m) -> outside k=3 ring -> NOT approaching
-	ring4, _ := h3.GridDisk(stopCell, 4)
+	// 4. 4-ring neighbor (~700m) -> OUTSIDE k=3 ring -> NOT approaching
+	ring4, _ := h3.GridDisk(zoneCell, 4)
 	ring3Map := make(map[h3.Cell]bool)
 	for _, c := range ring3 {
 		ring3Map[c] = true
@@ -84,26 +84,26 @@ func TestArrivalsService_IsApproaching_RealCoordinates(t *testing.T) {
 		}
 	}
 	llK4, _ := h3.CellToLatLng(cellK4)
-	if svc.isApproaching(llK4.Lat, llK4.Lng, stopLat, stopLng) {
-		t.Errorf("bus in k=4 cell %s should NOT be approaching (outside k=3)", cellK4.String())
+	if svc.isApproaching(llK4.Lat, llK4.Lng, zoneLat, zoneLng) {
+		t.Errorf("device in k=4 cell %s should NOT be approaching (outside k=3)", cellK4.String())
 	}
 
 	// 5. Far away (~5 km) -> NOT approaching
-	if svc.isApproaching(28.6600, 77.2600, stopLat, stopLng) {
-		t.Error("bus 5km away should NOT be approaching")
+	if svc.isApproaching(28.6600, 77.2600, zoneLat, zoneLng) {
+		t.Error("device 5km away should NOT be approaching")
 	}
 
-	// 6. Invalid resolution (empty busHex) -> false
+	// 6. Invalid resolution (empty deviceHex) -> false
 	badGeoSvc := NewGeofencingServiceWithResolution(nil, nil, -1)
-	badArrivalSvc := &ArrivalsService{geoService: badGeoSvc}
-	if badArrivalSvc.isApproaching(stopLat, stopLng, stopLat, stopLng) {
+	badGeofenceSvc := &GeofenceService{geoService: badGeoSvc}
+	if badGeofenceSvc.isApproaching(zoneLat, zoneLng, zoneLat, zoneLng) {
 		t.Error("empty hex should NOT be approaching")
 	}
 }
 
-func TestArrivalsService_CalculateETAWithTraffic(t *testing.T) {
+func TestGeofenceService_CalculateETAWithTraffic(t *testing.T) {
 	geoSvc := NewGeofencingServiceWithResolution(nil, nil, 9)
-	svc := &ArrivalsService{geoService: geoSvc}
+	svc := &GeofenceService{geoService: geoSvc}
 
 	t.Run("NormalSpeed", func(t *testing.T) {
 		fromLat, fromLng := 28.5000, 77.0000
@@ -127,7 +127,7 @@ func TestArrivalsService_CalculateETAWithTraffic(t *testing.T) {
 		}
 	})
 
-	t.Run("DefaultSpeedFallback_StoppedBus", func(t *testing.T) {
+	t.Run("DefaultSpeedFallback_StoppedDevice", func(t *testing.T) {
 		// Speed is 0.0 km/h (< 1.0 km/h MinSpeedKmh) -> triggers DefaultSpeed (20.0 km/h)
 		fromLat, fromLng := 28.6139, 77.2090
 		toLat, toLng := 28.7139, 77.2090
@@ -152,11 +152,11 @@ func TestArrivalsService_CalculateETAWithTraffic(t *testing.T) {
 	})
 }
 
-func TestArrivalsService_GetArrivalsForStop(t *testing.T) {
+func TestGeofenceService_GetPredictionsForZone(t *testing.T) {
 	ctx := context.Background()
-	stopLat, stopLng := 28.6139, 77.2090
+	zoneLat, zoneLng := 28.6139, 77.2090
 
-	mockStop := &mockStopRepo{
+	mockZone := &mockZoneRepo{
 		getByIDFn: func(ctx context.Context, stopID string) (*models.Zone, error) {
 			if stopID != "stop-101" {
 				return nil, fmt.Errorf("stop not found")
@@ -164,8 +164,8 @@ func TestArrivalsService_GetArrivalsForStop(t *testing.T) {
 			return &models.Zone{
 				ID:        "stop-101",
 				Name:      "Connaught Place",
-				Latitude:  stopLat,
-				Longitude: stopLng,
+				Latitude:  zoneLat,
+				Longitude: zoneLng,
 				Sequence:  5,
 			}, nil
 		},
@@ -181,7 +181,7 @@ func TestArrivalsService_GetArrivalsForStop(t *testing.T) {
 					TripID:     "trip-1",
 					DeviceID:   "dev-1",
 					DeviceName: "Bus 101",
-					Latitude:   28.6139, // At stop
+					Latitude:   28.6139, // At zone
 					Longitude:  77.2090,
 					Speed:      30.0,
 				},
@@ -198,18 +198,18 @@ func TestArrivalsService_GetArrivalsForStop(t *testing.T) {
 	}
 
 	geoSvc := NewGeofencingServiceWithResolution(nil, nil, 9)
-	svc := NewArrivalsService(mockStop, mockTrip, nil, geoSvc)
+	svc := NewGeofenceService(mockZone, mockTrip, nil, geoSvc)
 
-	predictions, err := svc.GetArrivalsForStop(ctx, "stop-101")
+	predictions, err := svc.GetPredictionsForZone(ctx, "stop-101")
 	if err != nil {
-		t.Fatalf("GetArrivalsForStop failed: %v", err)
+		t.Fatalf("GetPredictionsForZone failed: %v", err)
 	}
 
 	if len(predictions) != 2 {
 		t.Fatalf("expected 2 predictions, got %d", len(predictions))
 	}
 
-	// Trip 1: At stop
+	// Trip 1: At zone
 	p1 := predictions[0]
 	if p1.TripID != "trip-1" || !p1.IsApproaching || p1.ETAMinutes != 0 {
 		t.Errorf("unexpected p1: %+v", p1)
@@ -229,24 +229,24 @@ func TestArrivalsService_GetArrivalsForStop(t *testing.T) {
 	}
 }
 
-func TestArrivalsService_GetArrivalsForStop_Errors(t *testing.T) {
+func TestGeofenceService_GetPredictionsForZone_Errors(t *testing.T) {
 	ctx := context.Background()
 
-	t.Run("StopNotFound", func(t *testing.T) {
-		mockStop := &mockStopRepo{
+	t.Run("ZoneNotFound", func(t *testing.T) {
+		mockZone := &mockZoneRepo{
 			getByIDFn: func(ctx context.Context, stopID string) (*models.Zone, error) {
 				return nil, fmt.Errorf("stop not found")
 			},
 		}
-		svc := NewArrivalsService(mockStop, nil, nil, nil)
-		_, err := svc.GetArrivalsForStop(ctx, "missing")
+		svc := NewGeofenceService(mockZone, nil, nil, nil)
+		_, err := svc.GetPredictionsForZone(ctx, "missing")
 		if err == nil {
-			t.Error("expected error for missing stop")
+			t.Error("expected error for missing zone")
 		}
 	})
 
 	t.Run("TripRepoError", func(t *testing.T) {
-		mockStop := &mockStopRepo{
+		mockZone := &mockZoneRepo{
 			getByIDFn: func(ctx context.Context, stopID string) (*models.Zone, error) {
 				return &models.Zone{ID: "stop-1", Sequence: 2}, nil
 			},
@@ -256,18 +256,18 @@ func TestArrivalsService_GetArrivalsForStop_Errors(t *testing.T) {
 				return nil, fmt.Errorf("trip db error")
 			},
 		}
-		svc := NewArrivalsService(mockStop, mockTrip, nil, nil)
-		_, err := svc.GetArrivalsForStop(ctx, "stop-1")
+		svc := NewGeofenceService(mockZone, mockTrip, nil, nil)
+		_, err := svc.GetPredictionsForZone(ctx, "stop-1")
 		if err == nil {
 			t.Error("expected error for trip repo failure")
 		}
 	})
 }
 
-func TestArrivalsService_GetNearbyArrivals(t *testing.T) {
+func TestGeofenceService_GetNearbyPredictions(t *testing.T) {
 	ctx := context.Background()
 
-	mockStop := &mockStopRepo{
+	mockZone := &mockZoneRepo{
 		getByIDFn: func(ctx context.Context, stopID string) (*models.Zone, error) {
 			return &models.Zone{ID: stopID, Latitude: 28.6139, Longitude: 77.2090, Sequence: 1}, nil
 		},
@@ -287,36 +287,36 @@ func TestArrivalsService_GetNearbyArrivals(t *testing.T) {
 		},
 	}
 
-	geoSvc := NewGeofencingServiceWithResolution(nil, mockStop, 9)
-	svc := NewArrivalsService(mockStop, mockTrip, nil, geoSvc)
+	geoSvc := NewGeofencingServiceWithResolution(nil, mockZone, 9)
+	svc := NewGeofenceService(mockZone, mockTrip, nil, geoSvc)
 
-	predictions, err := svc.GetNearbyArrivals(ctx, 28.6139, 77.2090, 500)
+	predictions, err := svc.GetNearbyPredictions(ctx, 28.6139, 77.2090, 500)
 	if err != nil {
-		t.Fatalf("GetNearbyArrivals failed: %v", err)
+		t.Fatalf("GetNearbyPredictions failed: %v", err)
 	}
 
-	// Should deduplicate "trip-unique" across stops
+	// Should deduplicate "trip-unique" across zones
 	if len(predictions) != 1 || predictions[0].TripID != "trip-unique" {
 		t.Errorf("expected 1 deduplicated prediction for trip-unique, got %v", predictions)
 	}
 }
 
-func TestArrivalsService_DetectArrivalEvent(t *testing.T) {
+func TestGeofenceService_DetectEntryEvent(t *testing.T) {
 	ctx := context.Background()
-	stop := &models.Zone{Latitude: 28.6139, Longitude: 77.2090}
+	zone := &models.Zone{Latitude: 28.6139, Longitude: 77.2090}
 
-	t.Run("AtStop", func(t *testing.T) {
+	t.Run("AtZone", func(t *testing.T) {
 		mockLoc := &mockLocationRepo{
 			getLatestFn: func(ctx context.Context, deviceID string) (*models.Location, error) {
 				return &models.Location{Latitude: 28.6139, Longitude: 77.2090}, nil
 			},
 		}
 		geoSvc := NewGeofencingServiceWithResolution(mockLoc, nil, 9)
-		svc := NewArrivalsService(nil, nil, mockLoc, geoSvc)
+		svc := NewGeofenceService(nil, nil, mockLoc, geoSvc)
 
-		atStop, err := svc.DetectArrivalEvent(ctx, "dev-1", stop)
-		if err != nil || !atStop {
-			t.Errorf("expected true, got %v (err: %v)", atStop, err)
+		atZone, err := svc.DetectEntryEvent(ctx, "dev-1", zone)
+		if err != nil || !atZone {
+			t.Errorf("expected true, got %v (err: %v)", atZone, err)
 		}
 	})
 
@@ -327,9 +327,9 @@ func TestArrivalsService_DetectArrivalEvent(t *testing.T) {
 			},
 		}
 		geoSvc := NewGeofencingServiceWithResolution(mockLoc, nil, 9)
-		svc := NewArrivalsService(nil, nil, mockLoc, geoSvc)
+		svc := NewGeofenceService(nil, nil, mockLoc, geoSvc)
 
-		_, err := svc.DetectArrivalEvent(ctx, "dev-1", stop)
+		_, err := svc.DetectEntryEvent(ctx, "dev-1", zone)
 		if err == nil {
 			t.Error("expected error from location repo failure")
 		}

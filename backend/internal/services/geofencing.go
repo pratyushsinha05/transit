@@ -10,24 +10,24 @@ import (
 // GeofencingService handles H3-based geofencing and spatial queries
 type GeofencingService struct {
 	locRepo    LocationRepository
-	stopRepo   StopRepository
+	zoneRepo   ZoneRepository
 	resolution int // H3 resolution for geofencing (default: 9)
 }
 
 // NewGeofencingService creates a new GeofencingService
-func NewGeofencingService(locRepo LocationRepository, stopRepo StopRepository) *GeofencingService {
+func NewGeofencingService(locRepo LocationRepository, zoneRepo ZoneRepository) *GeofencingService {
 	return &GeofencingService{
 		locRepo:    locRepo,
-		stopRepo:   stopRepo,
-		resolution: 9, // ~175m edge length, ideal for bus stop detection
+		zoneRepo:   zoneRepo,
+		resolution: 9, // ~175m edge length, ideal for zone detection
 	}
 }
 
 // NewGeofencingServiceWithResolution creates a service with custom H3 resolution
-func NewGeofencingServiceWithResolution(locRepo LocationRepository, stopRepo StopRepository, resolution int) *GeofencingService {
+func NewGeofencingServiceWithResolution(locRepo LocationRepository, zoneRepo ZoneRepository, resolution int) *GeofencingService {
 	return &GeofencingService{
 		locRepo:    locRepo,
-		stopRepo:   stopRepo,
+		zoneRepo:   zoneRepo,
 		resolution: resolution,
 	}
 }
@@ -56,48 +56,48 @@ func CalculateHexAtResolution(lat, lng float64, resolution int) string {
 // Phase4Reserved: reserved for Phase 4 geofence-event wiring (CLAUDE.md §2).
 // Zero callers today. Do not delete — Phase 4 will wire this onto the request path.
 //
-// IsAtStop checks if a bus is at a stop using H3 hex comparison
-// This is a fast O(1) check - both points in same hex means "at stop"
-func (s *GeofencingService) IsAtStop(busLat, busLng, stopLat, stopLng float64) bool {
-	busHex := s.CalculateHex(busLat, busLng)
-	stopHex := s.CalculateHex(stopLat, stopLng)
-	return busHex != "" && stopHex != "" && busHex == stopHex
+// IsAtZone checks if a device is at a zone using H3 hex comparison
+// This is a fast O(1) check - both points in same hex means "at zone"
+func (s *GeofencingService) IsAtZone(deviceLat, deviceLng, zoneLat, zoneLng float64) bool {
+	deviceHex := s.CalculateHex(deviceLat, deviceLng)
+	zoneHex := s.CalculateHex(zoneLat, zoneLng)
+	return deviceHex != "" && zoneHex != "" && deviceHex == zoneHex
 }
 
 // Phase4Reserved: reserved for Phase 4 geofence-event wiring (CLAUDE.md §2).
 // Zero callers today. Do not delete — Phase 4 will wire this onto the request path.
 //
-// IsAtStopWithHysteresis checks if bus is at stop with hysteresis to prevent flickering
-// - Bus must be in same hex as stop
-// - If previously at stop, allow 1-ring buffer before considering "departed"
-func (s *GeofencingService) IsAtStopWithHysteresis(busLat, busLng, stopLat, stopLng float64, wasAtStop bool) bool {
-	busHex := s.CalculateHex(busLat, busLng)
-	stopHex := s.CalculateHex(stopLat, stopLng)
+// IsAtZoneWithHysteresis checks if device is at zone with hysteresis to prevent flickering
+// - Device must be in same hex as zone
+// - If previously at zone, allow 1-ring buffer before considering "departed"
+func (s *GeofencingService) IsAtZoneWithHysteresis(deviceLat, deviceLng, zoneLat, zoneLng float64, wasAtZone bool) bool {
+	deviceHex := s.CalculateHex(deviceLat, deviceLng)
+	zoneHex := s.CalculateHex(zoneLat, zoneLng)
 
-	if busHex == "" || stopHex == "" {
+	if deviceHex == "" || zoneHex == "" {
 		return false
 	}
 
-	// If in same hex, definitely at stop
-	if busHex == stopHex {
+	// If in same hex, definitely at zone
+	if deviceHex == zoneHex {
 		return true
 	}
 
-	// If previously at stop, check if still in neighboring hex (hysteresis)
-	if wasAtStop {
-		stopLatLng := h3.NewLatLng(stopLat, stopLng)
-		stopCell, err := h3.LatLngToCell(stopLatLng, s.resolution)
+	// If previously at zone, check if still in neighboring hex (hysteresis)
+	if wasAtZone {
+		zoneLatLng := h3.NewLatLng(zoneLat, zoneLng)
+		zoneCell, err := h3.LatLngToCell(zoneLatLng, s.resolution)
 		if err != nil {
 			return false
 		}
-		neighbors, err := h3.GridDisk(stopCell, 1) // 1-ring neighbors
+		neighbors, err := h3.GridDisk(zoneCell, 1) // 1-ring neighbors
 		if err != nil {
 			return false
 		}
 
 		for _, neighbor := range neighbors {
-			if neighbor.String() == busHex {
-				return true // Still considered "at stop" due to hysteresis
+			if neighbor.String() == deviceHex {
+				return true // Still considered "at zone" due to hysteresis
 			}
 		}
 	}
@@ -126,10 +126,10 @@ func (s *GeofencingService) GetNeighborHexes(lat, lng float64, k int) []string {
 	return hexes
 }
 
-// FindNearbyBuses returns buses near a point using the H3+PostGIS combo strategy
+// FindNearbyDevices returns devices near a point using the H3+PostGIS combo strategy
 // Step 1: H3 pre-filter (fast index scan)
 // Step 2: PostGIS refine (accurate distance)
-func (s *GeofencingService) FindNearbyBuses(ctx context.Context, lat, lng float64, radiusMeters int) ([]models.NearbyDevice, error) {
+func (s *GeofencingService) FindNearbyDevices(ctx context.Context, lat, lng float64, radiusMeters int) ([]models.NearbyDevice, error) {
 	// For small radius (< 500m), H3 k-ring + PostGIS refinement is fastest
 	// For larger radius, direct PostGIS query might be better
 	if radiusMeters <= 500 {
@@ -146,59 +146,59 @@ func (s *GeofencingService) FindNearbyBuses(ctx context.Context, lat, lng float6
 			return nil, nil
 		}
 
-		// Step 2: Query buses in those hexes (H3 pre-filter)
-		buses, err := s.locRepo.GetDevicesInHexes(ctx, hexes, 5) // 5 min max age
+		// Step 2: Query devices in those hexes (H3 pre-filter)
+		devices, err := s.locRepo.GetDevicesInHexes(ctx, hexes, 5) // 5 min max age
 		if err != nil {
 			return nil, err
 		}
 
 		// Step 3: PostGIS would refine here, but for simplicity we return all
 		// In production, you'd filter by exact distance using Haversine
-		return buses, nil
+		return devices, nil
 	}
 
 	// For larger radius, use PostGIS directly (it has GIST index)
 	return s.locRepo.GetDevicesNearZone(ctx, lat, lng, radiusMeters, 5)
 }
 
-// FindNearbyStops returns stops near a point
-func (s *GeofencingService) FindNearbyStops(ctx context.Context, lat, lng float64, radiusMeters int) ([]models.Zone, error) {
-	// For now, delegate to stop repository
-	// In future, could add H3 pre-filtering for stops as well
-	return s.stopRepo.GetNearby(ctx, lat, lng, radiusMeters)
+// FindNearbyZones returns zones near a point
+func (s *GeofencingService) FindNearbyZones(ctx context.Context, lat, lng float64, radiusMeters int) ([]models.Zone, error) {
+	// For now, delegate to zone repository
+	// In future, could add H3 pre-filtering for zones as well
+	return s.zoneRepo.GetNearby(ctx, lat, lng, radiusMeters)
 }
 
 // Phase4Reserved: reserved for Phase 4 geofence-event wiring (CLAUDE.md §2).
 // Zero callers today. Do not delete — Phase 4 will wire this onto the request path.
 //
-// DetectArrival checks if a bus has arrived at a stop based on location change
-// Arrival is detected when:
-// - Bus was NOT at stop in previous location
-// - Bus IS at stop in current location
-func (s *GeofencingService) DetectArrival(oldLoc, newLoc *models.Location, stop *models.Zone) bool {
-	if oldLoc == nil || newLoc == nil || stop == nil {
+// DetectEntry checks if a device has arrived at a zone based on location change
+// Entry is detected when:
+// - Device was NOT at zone in previous location
+// - Device IS at zone in current location
+func (s *GeofencingService) DetectEntry(oldLoc, newLoc *models.Location, zone *models.Zone) bool {
+	if oldLoc == nil || newLoc == nil || zone == nil {
 		return false
 	}
 
-	wasAtStop := s.IsAtStop(oldLoc.Latitude, oldLoc.Longitude, stop.Latitude, stop.Longitude)
-	nowAtStop := s.IsAtStop(newLoc.Latitude, newLoc.Longitude, stop.Latitude, stop.Longitude)
+	wasAtZone := s.IsAtZone(oldLoc.Latitude, oldLoc.Longitude, zone.Latitude, zone.Longitude)
+	nowAtZone := s.IsAtZone(newLoc.Latitude, newLoc.Longitude, zone.Latitude, zone.Longitude)
 
-	return !wasAtStop && nowAtStop
+	return !wasAtZone && nowAtZone
 }
 
 // Phase4Reserved: reserved for Phase 4 geofence-event wiring (CLAUDE.md §2).
 // Zero callers today. Do not delete — Phase 4 will wire this onto the request path.
 //
-// DetectDeparture checks if a bus has departed from a stop
-func (s *GeofencingService) DetectDeparture(oldLoc, newLoc *models.Location, stop *models.Zone) bool {
-	if oldLoc == nil || newLoc == nil || stop == nil {
+// DetectExit checks if a device has departed from a zone
+func (s *GeofencingService) DetectExit(oldLoc, newLoc *models.Location, zone *models.Zone) bool {
+	if oldLoc == nil || newLoc == nil || zone == nil {
 		return false
 	}
 
-	wasAtStop := s.IsAtStop(oldLoc.Latitude, oldLoc.Longitude, stop.Latitude, stop.Longitude)
-	nowAtStop := s.IsAtStop(newLoc.Latitude, newLoc.Longitude, stop.Latitude, stop.Longitude)
+	wasAtZone := s.IsAtZone(oldLoc.Latitude, oldLoc.Longitude, zone.Latitude, zone.Longitude)
+	nowAtZone := s.IsAtZone(newLoc.Latitude, newLoc.Longitude, zone.Latitude, zone.Longitude)
 
-	return wasAtStop && !nowAtStop
+	return wasAtZone && !nowAtZone
 }
 
 // GetHexResolution returns the current H3 resolution

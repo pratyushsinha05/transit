@@ -28,12 +28,12 @@ import (
 // Sec 3.2). A service or handler package importing its own concrete
 // dependency here would be the layering violation DEFECT-1 was.
 var (
-	_ handlers.ArrivalService        = (*services.ArrivalsService)(nil)
-	_ handlers.StopsService          = (*services.StopsService)(nil)
+	_ handlers.GeofenceService       = (*services.GeofenceService)(nil)
+	_ handlers.ZonesService          = (*services.ZonesService)(nil)
 	_ handlers.RoutesService         = (*services.RoutesService)(nil)
 	_ handlers.IngestService         = (*services.IngestService)(nil)
 	_ handlers.NearbyService         = (*services.GeofencingService)(nil)
-	_ services.StopRepository        = (*database.ZoneRepository)(nil)
+	_ services.ZoneRepository        = (*database.ZoneRepository)(nil)
 	_ services.TripRepository        = (*database.TripRepository)(nil)
 	_ services.LocationRepository    = (*database.LocationRepository)(nil)
 	_ services.RouteRepository       = (*database.RouteRepository)(nil)
@@ -76,7 +76,7 @@ func main() {
 
 	// 4. Initialize Repositories
 	locRepo := database.NewLocationRepositoryWithResolution(dbPool, cfg.H3Resolution)
-	stopRepo := database.NewZoneRepository(dbPool)
+	zoneRepo := database.NewZoneRepository(dbPool)
 	tripRepo := database.NewTripRepository(dbPool)
 	routeRepo := database.NewRouteRepository(dbPool)
 	deviceRouteRepo := database.NewDeviceRouteRepository(dbPool)
@@ -85,9 +85,9 @@ func main() {
 	deviceCache := cache.NewDeviceCache(redisClient)
 
 	// 5. Initialize Services
-	geoService := services.NewGeofencingServiceWithResolution(locRepo, stopRepo, cfg.H3Resolution)
-	arrivalsService := services.NewArrivalsService(stopRepo, tripRepo, locRepo, geoService)
-	stopsService := services.NewStopsService(stopRepo)
+	geoService := services.NewGeofencingServiceWithResolution(locRepo, zoneRepo, cfg.H3Resolution)
+	geofenceService := services.NewGeofenceService(zoneRepo, tripRepo, locRepo, geoService)
+	zonesService := services.NewZonesService(zoneRepo)
 	routesService := services.NewRoutesService(routeRepo)
 
 	// 6. Initialize Hub
@@ -101,8 +101,8 @@ func main() {
 	// 7. Initialize Handlers
 	locHandler := handlers.NewLocationHandler(ingestService)
 	routeHandler := handlers.NewRouteHandler(routesService)
-	stopHandler := handlers.NewStopHandler(stopsService)
-	arrivalHandler := handlers.NewArrivalHandler(arrivalsService)
+	zoneHandler := handlers.NewZoneHandler(zonesService)
+	geofenceHandler := handlers.NewGeofenceHandler(geofenceService)
 	wsHandler := handlers.NewWebSocketHandler(wsHub)
 	nearbyHandler := handlers.NewNearbyHandler(geoService)
 
@@ -135,14 +135,14 @@ func main() {
 	// Routes and stops
 	api.GET("/routes", routeHandler.GetRoutes)
 	api.POST("/routes", routeHandler.CreateRoute)
-	api.GET("/stops", stopHandler.GetStops)
+	api.GET("/stops", zoneHandler.GetZones)
 
 	// Arrivals
-	api.GET("/arrivals", arrivalHandler.GetArrivals)
+	api.GET("/arrivals", geofenceHandler.GetPredictions)
 
 	// Nearby queries (H3+PostGIS)
-	api.GET("/nearby/buses", nearbyHandler.GetNearbyBuses)
-	api.GET("/nearby/stops", nearbyHandler.GetNearbyStops)
+	api.GET("/nearby/buses", nearbyHandler.GetNearbyDevices)
+	api.GET("/nearby/stops", nearbyHandler.GetNearbyZones)
 
 	// Geo utilities
 	api.GET("/geo/hex", nearbyHandler.GetHexInfo)

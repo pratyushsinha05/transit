@@ -6,10 +6,10 @@ import (
 	"transit-backend/internal/models"
 )
 
-// StopRepository is the subset of stop-storage behavior the services layer
+// ZoneRepository is the subset of zone-storage behavior the services layer
 // needs. Declared here, in the consumer package, per CLAUDE.md Sec 7.1 ("A
 // service must depend on a repository interface, not a concrete type").
-type StopRepository interface {
+type ZoneRepository interface {
 	GetByID(ctx context.Context, stopID string) (*models.Zone, error)
 	GetByRouteID(ctx context.Context, routeID string) ([]models.Zone, error)
 	GetNearby(ctx context.Context, lat, lng float64, radiusMeters int) ([]models.Zone, error)

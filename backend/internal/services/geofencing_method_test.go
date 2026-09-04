@@ -45,28 +45,28 @@ func (m *mockLocationRepo) GetDevicesNearZone(ctx context.Context, lat, lng floa
 	return nil, nil
 }
 
-// mockStopRepo is a test double for StopRepository.
-type mockStopRepo struct {
+// mockZoneRepo is a test double for ZoneRepository.
+type mockZoneRepo struct {
 	getByIDFn      func(ctx context.Context, stopID string) (*models.Zone, error)
 	getByRouteIDFn func(ctx context.Context, routeID string) ([]models.Zone, error)
 	getNearbyFn    func(ctx context.Context, lat, lng float64, radiusMeters int) ([]models.Zone, error)
 }
 
-func (m *mockStopRepo) GetByID(ctx context.Context, stopID string) (*models.Zone, error) {
+func (m *mockZoneRepo) GetByID(ctx context.Context, stopID string) (*models.Zone, error) {
 	if m.getByIDFn != nil {
 		return m.getByIDFn(ctx, stopID)
 	}
 	return nil, nil
 }
 
-func (m *mockStopRepo) GetByRouteID(ctx context.Context, routeID string) ([]models.Zone, error) {
+func (m *mockZoneRepo) GetByRouteID(ctx context.Context, routeID string) ([]models.Zone, error) {
 	if m.getByRouteIDFn != nil {
 		return m.getByRouteIDFn(ctx, routeID)
 	}
 	return nil, nil
 }
 
-func (m *mockStopRepo) GetNearby(ctx context.Context, lat, lng float64, radiusMeters int) ([]models.Zone, error) {
+func (m *mockZoneRepo) GetNearby(ctx context.Context, lat, lng float64, radiusMeters int) ([]models.Zone, error) {
 	if m.getNearbyFn != nil {
 		return m.getNearbyFn(ctx, lat, lng, radiusMeters)
 	}
@@ -109,41 +109,41 @@ func TestGeofencingService_CalculateHex(t *testing.T) {
 	}
 }
 
-func TestGeofencingService_IsAtStop(t *testing.T) {
+func TestGeofencingService_IsAtZone(t *testing.T) {
 	svc := NewGeofencingServiceWithResolution(nil, nil, 9)
 
 	// Connaught Place coordinates
-	stopLat, stopLng := 28.6139, 77.2090
+	zoneLat, zoneLng := 28.6139, 77.2090
 
-	// Same coordinates -> same hex -> at stop
-	if !svc.IsAtStop(stopLat, stopLng, stopLat, stopLng) {
-		t.Error("expected same coordinates to be at stop")
+	// Same coordinates -> same hex -> at zone
+	if !svc.IsAtZone(zoneLat, zoneLng, zoneLat, zoneLng) {
+		t.Error("expected same coordinates to be at zone")
 	}
 
 	// 15 meters away -> still within ~175m edge hex
-	if !svc.IsAtStop(28.61395, 77.20905, stopLat, stopLng) {
+	if !svc.IsAtZone(28.61395, 77.20905, zoneLat, zoneLng) {
 		t.Error("expected 15m away point to be in same hex at resolution 9")
 	}
 
 	// ~1.5 km away -> different hex
-	if svc.IsAtStop(28.6270, 77.2190, stopLat, stopLng) {
-		t.Error("expected point 1.5km away to NOT be at stop")
+	if svc.IsAtZone(28.6270, 77.2190, zoneLat, zoneLng) {
+		t.Error("expected point 1.5km away to NOT be at zone")
 	}
 
-	// Service with invalid resolution returns empty hexes, so IsAtStop returns false
+	// Service with invalid resolution returns empty hexes, so IsAtZone returns false
 	badSvc := NewGeofencingServiceWithResolution(nil, nil, -1)
-	if badSvc.IsAtStop(stopLat, stopLng, stopLat, stopLng) {
+	if badSvc.IsAtZone(zoneLat, zoneLng, zoneLat, zoneLng) {
 		t.Error("expected invalid resolution to return false")
 	}
 }
 
-func TestGeofencingService_IsAtStopWithHysteresis(t *testing.T) {
+func TestGeofencingService_IsAtZoneWithHysteresis(t *testing.T) {
 	svc := NewGeofencingServiceWithResolution(nil, nil, 9)
-	stopLat, stopLng := 28.6139, 77.2090
-	stopCell, _ := h3.LatLngToCell(h3.NewLatLng(stopLat, stopLng), 9)
+	zoneLat, zoneLng := 28.6139, 77.2090
+	zoneCell, _ := h3.LatLngToCell(h3.NewLatLng(zoneLat, zoneLng), 9)
 
 	// Find an exact 1-ring neighbor cell
-	neighbors, err := h3.GridDisk(stopCell, 1)
+	neighbors, err := h3.GridDisk(zoneCell, 1)
 	if err != nil || len(neighbors) < 2 {
 		t.Fatalf("failed to get 1-ring neighbors: %v", err)
 	}
@@ -151,7 +151,7 @@ func TestGeofencingService_IsAtStopWithHysteresis(t *testing.T) {
 	// Pick a neighbor cell that is not the center cell itself
 	var neighborCell h3.Cell
 	for _, n := range neighbors {
-		if n != stopCell {
+		if n != zoneCell {
 			neighborCell = n
 			break
 		}
@@ -159,30 +159,30 @@ func TestGeofencingService_IsAtStopWithHysteresis(t *testing.T) {
 	neighborLL, _ := h3.CellToLatLng(neighborCell)
 	neighborLat, neighborLng := neighborLL.Lat, neighborLL.Lng
 
-	// Case 1: Same hex, wasAtStop = false -> true
-	if !svc.IsAtStopWithHysteresis(stopLat, stopLng, stopLat, stopLng, false) {
-		t.Error("same hex must return true regardless of wasAtStop")
+	// Case 1: Same hex, wasAtZone = false -> true
+	if !svc.IsAtZoneWithHysteresis(zoneLat, zoneLng, zoneLat, zoneLng, false) {
+		t.Error("same hex must return true regardless of wasAtZone")
 	}
 
-	// Case 2: In neighboring hex, wasAtStop = true -> true (hysteresis buffer holds)
-	if !svc.IsAtStopWithHysteresis(neighborLat, neighborLng, stopLat, stopLng, true) {
-		t.Errorf("neighbor hex (%s) with wasAtStop=true must return true under hysteresis", neighborCell.String())
+	// Case 2: In neighboring hex, wasAtZone = true -> true (hysteresis buffer holds)
+	if !svc.IsAtZoneWithHysteresis(neighborLat, neighborLng, zoneLat, zoneLng, true) {
+		t.Errorf("neighbor hex (%s) with wasAtZone=true must return true under hysteresis", neighborCell.String())
 	}
 
-	// Case 3: In neighboring hex, wasAtStop = false -> false (no hysteresis buffer for new arrivals)
-	if svc.IsAtStopWithHysteresis(neighborLat, neighborLng, stopLat, stopLng, false) {
-		t.Errorf("neighbor hex (%s) with wasAtStop=false must return false", neighborCell.String())
+	// Case 3: In neighboring hex, wasAtZone = false -> false (no hysteresis buffer for new arrivals)
+	if svc.IsAtZoneWithHysteresis(neighborLat, neighborLng, zoneLat, zoneLng, false) {
+		t.Errorf("neighbor hex (%s) with wasAtZone=false must return false", neighborCell.String())
 	}
 
-	// Case 4: Far away (~5km), wasAtStop = true -> false (outside 1-ring buffer)
+	// Case 4: Far away (~5km), wasAtZone = true -> false (outside 1-ring buffer)
 	farLat, farLng := 28.6600, 77.2600
-	if svc.IsAtStopWithHysteresis(farLat, farLng, stopLat, stopLng, true) {
-		t.Error("far away point must return false even with wasAtStop=true")
+	if svc.IsAtZoneWithHysteresis(farLat, farLng, zoneLat, zoneLng, true) {
+		t.Error("far away point must return false even with wasAtZone=true")
 	}
 
 	// Case 5: Invalid resolution -> false
 	badSvc := NewGeofencingServiceWithResolution(nil, nil, -1)
-	if badSvc.IsAtStopWithHysteresis(stopLat, stopLng, stopLat, stopLng, true) {
+	if badSvc.IsAtZoneWithHysteresis(zoneLat, zoneLng, zoneLat, zoneLng, true) {
 		t.Error("invalid resolution must return false")
 	}
 }
@@ -215,45 +215,45 @@ func TestGeofencingService_GetNeighborHexes(t *testing.T) {
 	}
 }
 
-func TestGeofencingService_DetectArrivalAndDeparture(t *testing.T) {
+func TestGeofencingService_DetectEntryAndExit(t *testing.T) {
 	svc := NewGeofencingServiceWithResolution(nil, nil, 9)
-	stop := &models.Zone{Latitude: 28.6139, Longitude: 77.2090}
+	zone := &models.Zone{Latitude: 28.6139, Longitude: 77.2090}
 
-	atStopLoc := &models.Location{Latitude: 28.6139, Longitude: 77.2090}
+	atZoneLoc := &models.Location{Latitude: 28.6139, Longitude: 77.2090}
 	farLoc := &models.Location{Latitude: 28.6500, Longitude: 77.2500}
 
-	// DetectArrival: was far, now at stop -> true
-	if !svc.DetectArrival(farLoc, atStopLoc, stop) {
-		t.Error("expected DetectArrival(far, atStop) to be true")
+	// DetectEntry: was far, now at zone -> true
+	if !svc.DetectEntry(farLoc, atZoneLoc, zone) {
+		t.Error("expected DetectEntry(far, atZone) to be true")
 	}
 
-	// DetectArrival: already at stop -> false
-	if svc.DetectArrival(atStopLoc, atStopLoc, stop) {
-		t.Error("expected DetectArrival(atStop, atStop) to be false")
+	// DetectEntry: already at zone -> false
+	if svc.DetectEntry(atZoneLoc, atZoneLoc, zone) {
+		t.Error("expected DetectEntry(atZone, atZone) to be false")
 	}
 
-	// DetectArrival: nil guards
-	if svc.DetectArrival(nil, atStopLoc, stop) || svc.DetectArrival(farLoc, nil, stop) || svc.DetectArrival(farLoc, atStopLoc, nil) {
-		t.Error("DetectArrival with nil arguments must return false")
+	// DetectEntry: nil guards
+	if svc.DetectEntry(nil, atZoneLoc, zone) || svc.DetectEntry(farLoc, nil, zone) || svc.DetectEntry(farLoc, atZoneLoc, nil) {
+		t.Error("DetectEntry with nil arguments must return false")
 	}
 
-	// DetectDeparture: was at stop, now far -> true
-	if !svc.DetectDeparture(atStopLoc, farLoc, stop) {
-		t.Error("expected DetectDeparture(atStop, far) to be true")
+	// DetectExit: was at zone, now far -> true
+	if !svc.DetectExit(atZoneLoc, farLoc, zone) {
+		t.Error("expected DetectExit(atZone, far) to be true")
 	}
 
-	// DetectDeparture: was far, still far -> false
-	if svc.DetectDeparture(farLoc, farLoc, stop) {
-		t.Error("expected DetectDeparture(far, far) to be false")
+	// DetectExit: was far, still far -> false
+	if svc.DetectExit(farLoc, farLoc, zone) {
+		t.Error("expected DetectExit(far, far) to be false")
 	}
 
-	// DetectDeparture: nil guards
-	if svc.DetectDeparture(nil, farLoc, stop) || svc.DetectDeparture(atStopLoc, nil, stop) || svc.DetectDeparture(atStopLoc, farLoc, nil) {
-		t.Error("DetectDeparture with nil arguments must return false")
+	// DetectExit: nil guards
+	if svc.DetectExit(nil, farLoc, zone) || svc.DetectExit(atZoneLoc, nil, zone) || svc.DetectExit(atZoneLoc, farLoc, nil) {
+		t.Error("DetectExit with nil arguments must return false")
 	}
 }
 
-func TestGeofencingService_FindNearbyBuses_SmallRadiusKRing(t *testing.T) {
+func TestGeofencingService_FindNearbyDevices_SmallRadiusKRing(t *testing.T) {
 	ctx := context.Background()
 	var queryHexes []string
 	var queryMaxAge int
@@ -271,13 +271,13 @@ func TestGeofencingService_FindNearbyBuses_SmallRadiusKRing(t *testing.T) {
 	svc := NewGeofencingServiceWithResolution(mockLoc, nil, 9)
 
 	// Radius 350m <= 500m -> uses H3 k-ring path
-	buses, err := svc.FindNearbyBuses(ctx, 28.6139, 77.2090, 350)
+	devices, err := svc.FindNearbyDevices(ctx, 28.6139, 77.2090, 350)
 	if err != nil {
-		t.Fatalf("FindNearbyBuses failed: %v", err)
+		t.Fatalf("FindNearbyDevices failed: %v", err)
 	}
 
-	if len(buses) != 1 || buses[0].DeviceID != "bus-1" {
-		t.Errorf("unexpected buses returned: %v", buses)
+	if len(devices) != 1 || devices[0].DeviceID != "bus-1" {
+		t.Errorf("unexpected devices returned: %v", devices)
 	}
 	if len(queryHexes) == 0 {
 		t.Error("expected non-empty hexes to be queried")
@@ -287,7 +287,7 @@ func TestGeofencingService_FindNearbyBuses_SmallRadiusKRing(t *testing.T) {
 	}
 }
 
-func TestGeofencingService_FindNearbyBuses_LargeRadiusPostGIS(t *testing.T) {
+func TestGeofencingService_FindNearbyDevices_LargeRadiusPostGIS(t *testing.T) {
 	ctx := context.Background()
 	var directCalled bool
 
@@ -302,23 +302,23 @@ func TestGeofencingService_FindNearbyBuses_LargeRadiusPostGIS(t *testing.T) {
 
 	svc := NewGeofencingServiceWithResolution(mockLoc, nil, 9)
 
-	// Radius 1000m > 500m -> delegates directly to PostGIS GetBusesNearStop
-	buses, err := svc.FindNearbyBuses(ctx, 28.6139, 77.2090, 1000)
+	// Radius 1000m > 500m -> delegates directly to PostGIS GetDevicesNearZone
+	devices, err := svc.FindNearbyDevices(ctx, 28.6139, 77.2090, 1000)
 	if err != nil {
-		t.Fatalf("FindNearbyBuses failed: %v", err)
+		t.Fatalf("FindNearbyDevices failed: %v", err)
 	}
 
 	if !directCalled {
-		t.Error("expected direct PostGIS GetBusesNearStop to be called for radius > 500m")
+		t.Error("expected direct PostGIS GetDevicesNearZone to be called for radius > 500m")
 	}
-	if len(buses) != 1 || buses[0].DeviceID != "bus-2" {
-		t.Errorf("unexpected buses: %v", buses)
+	if len(devices) != 1 || devices[0].DeviceID != "bus-2" {
+		t.Errorf("unexpected devices: %v", devices)
 	}
 }
 
-func TestGeofencingService_FindNearbyStops(t *testing.T) {
+func TestGeofencingService_FindNearbyZones(t *testing.T) {
 	ctx := context.Background()
-	mockStop := &mockStopRepo{
+	mockZone := &mockZoneRepo{
 		getNearbyFn: func(ctx context.Context, lat, lng float64, radiusMeters int) ([]models.Zone, error) {
 			return []models.Zone{
 				{ID: "stop-1", Name: "CP Outer Circle", Latitude: lat, Longitude: lng},
@@ -326,17 +326,17 @@ func TestGeofencingService_FindNearbyStops(t *testing.T) {
 		},
 	}
 
-	svc := NewGeofencingServiceWithResolution(nil, mockStop, 9)
-	stops, err := svc.FindNearbyStops(ctx, 28.6139, 77.2090, 500)
+	svc := NewGeofencingServiceWithResolution(nil, mockZone, 9)
+	zones, err := svc.FindNearbyZones(ctx, 28.6139, 77.2090, 500)
 	if err != nil {
-		t.Fatalf("FindNearbyStops failed: %v", err)
+		t.Fatalf("FindNearbyZones failed: %v", err)
 	}
-	if len(stops) != 1 || stops[0].ID != "stop-1" {
-		t.Errorf("unexpected stops: %v", stops)
+	if len(zones) != 1 || zones[0].ID != "stop-1" {
+		t.Errorf("unexpected zones: %v", zones)
 	}
 }
 
-func TestGeofencingService_FindNearbyBuses_RepoError(t *testing.T) {
+func TestGeofencingService_FindNearbyDevices_RepoError(t *testing.T) {
 	ctx := context.Background()
 	mockLoc := &mockLocationRepo{
 		getDevicesInHexesFn: func(ctx context.Context, hexes []string, maxAgeMinutes int) ([]models.NearbyDevice, error) {
@@ -345,7 +345,7 @@ func TestGeofencingService_FindNearbyBuses_RepoError(t *testing.T) {
 	}
 
 	svc := NewGeofencingServiceWithResolution(mockLoc, nil, 9)
-	_, err := svc.FindNearbyBuses(ctx, 28.6139, 77.2090, 300)
+	_, err := svc.FindNearbyDevices(ctx, 28.6139, 77.2090, 300)
 	if err == nil {
 		t.Error("expected error from repository failure")
 	}

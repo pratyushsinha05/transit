@@ -6,31 +6,31 @@ import (
 	"transit-backend/pkg/geo"
 )
 
-// ArrivalsService handles arrival predictions and ETA calculations
-type ArrivalsService struct {
-	stopRepo   StopRepository
+// GeofenceService handles geofence event predictions and ETA calculations
+type GeofenceService struct {
+	zoneRepo   ZoneRepository
 	tripRepo   TripRepository
 	locRepo    LocationRepository
 	geoService *GeofencingService
 }
 
-// NewArrivalsService creates a new ArrivalsService
-func NewArrivalsService(
-	stopRepo StopRepository,
+// NewGeofenceService creates a new GeofenceService
+func NewGeofenceService(
+	zoneRepo ZoneRepository,
 	tripRepo TripRepository,
 	locRepo LocationRepository,
 	geoService *GeofencingService,
-) *ArrivalsService {
-	return &ArrivalsService{
-		stopRepo:   stopRepo,
+) *GeofenceService {
+	return &GeofenceService{
+		zoneRepo:   zoneRepo,
 		tripRepo:   tripRepo,
 		locRepo:    locRepo,
 		geoService: geoService,
 	}
 }
 
-// ArrivalPrediction represents a predicted arrival with ETA
-type ArrivalPrediction struct {
+// GeofencePrediction represents a predicted geofence arrival with ETA
+type GeofencePrediction struct {
 	TripID        string  `json:"trip_id"`
 	DeviceID      string  `json:"device_id"`
 	DeviceName    string  `json:"device_name"`
@@ -41,33 +41,33 @@ type ArrivalPrediction struct {
 	IsApproaching bool    `json:"is_approaching"`
 }
 
-// GetArrivalsForStop returns predicted arrivals for a stop using H3+PostGIS strategy
-func (s *ArrivalsService) GetArrivalsForStop(ctx context.Context, stopID string) ([]ArrivalPrediction, error) {
-	// 1. Get target stop details
-	targetStop, err := s.stopRepo.GetByID(ctx, stopID)
+// GetPredictionsForZone returns predicted arrivals for a zone using H3+PostGIS strategy
+func (s *GeofenceService) GetPredictionsForZone(ctx context.Context, zoneID string) ([]GeofencePrediction, error) {
+	// 1. Get target zone details
+	targetZone, err := s.zoneRepo.GetByID(ctx, zoneID)
 	if err != nil {
 		return nil, err
 	}
 
-	// 2. Get active trips before this stop
-	trips, err := s.tripRepo.GetActiveTripsBeforeZone(ctx, targetStop.Sequence)
+	// 2. Get active trips before this zone
+	trips, err := s.tripRepo.GetActiveTripsBeforeZone(ctx, targetZone.Sequence)
 	if err != nil {
 		return nil, err
 	}
 
 	// 3. Calculate ETA for each trip
-	predictions := make([]ArrivalPrediction, 0, len(trips))
+	predictions := make([]GeofencePrediction, 0, len(trips))
 	for _, trip := range trips {
 		// Calculate distance using Haversine
-		distanceKm := geo.Haversine(trip.Latitude, trip.Longitude, targetStop.Latitude, targetStop.Longitude)
+		distanceKm := geo.Haversine(trip.Latitude, trip.Longitude, targetZone.Latitude, targetZone.Longitude)
 
 		// Calculate ETA
-		etaMinutes := geo.CalculateETA(trip.Latitude, trip.Longitude, targetStop.Latitude, targetStop.Longitude, trip.Speed)
+		etaMinutes := geo.CalculateETA(trip.Latitude, trip.Longitude, targetZone.Latitude, targetZone.Longitude, trip.Speed)
 
-		// Check if bus is approaching (getting closer) using H3
-		isApproaching := s.isApproaching(trip.Latitude, trip.Longitude, targetStop.Latitude, targetStop.Longitude)
+		// Check if device is approaching (getting closer) using H3
+		isApproaching := s.isApproaching(trip.Latitude, trip.Longitude, targetZone.Latitude, targetZone.Longitude)
 
-		predictions = append(predictions, ArrivalPrediction{
+		predictions = append(predictions, GeofencePrediction{
 			TripID:        trip.TripID,
 			DeviceID:      trip.DeviceID,
 			DeviceName:    trip.DeviceName,
@@ -81,22 +81,22 @@ func (s *ArrivalsService) GetArrivalsForStop(ctx context.Context, stopID string)
 	return predictions, nil
 }
 
-// GetNearbyArrivals returns buses approaching any stop near a point
-func (s *ArrivalsService) GetNearbyArrivals(ctx context.Context, lat, lng float64, radiusMeters int) ([]ArrivalPrediction, error) {
-	// 1. Find nearby stops
-	stops, err := s.geoService.FindNearbyStops(ctx, lat, lng, radiusMeters)
+// GetNearbyPredictions returns devices approaching any zone near a point
+func (s *GeofenceService) GetNearbyPredictions(ctx context.Context, lat, lng float64, radiusMeters int) ([]GeofencePrediction, error) {
+	// 1. Find nearby zones
+	zones, err := s.geoService.FindNearbyZones(ctx, lat, lng, radiusMeters)
 	if err != nil {
 		return nil, err
 	}
 
-	// 2. Get arrivals for each stop
-	var allPredictions []ArrivalPrediction
+	// 2. Get predictions for each zone
+	var allPredictions []GeofencePrediction
 	seen := make(map[string]bool) // Deduplicate by trip ID
 
-	for _, stop := range stops {
-		predictions, err := s.GetArrivalsForStop(ctx, stop.ID)
+	for _, zone := range zones {
+		predictions, err := s.GetPredictionsForZone(ctx, zone.ID)
 		if err != nil {
-			continue // Skip stops with errors
+			continue // Skip zones with errors
 		}
 
 		for _, p := range predictions {
@@ -110,19 +110,19 @@ func (s *ArrivalsService) GetNearbyArrivals(ctx context.Context, lat, lng float6
 	return allPredictions, nil
 }
 
-// isApproaching determines if a bus is approaching a stop
-// Uses H3 hex comparison - if bus hex is in stop's k-ring, it's approaching
-func (s *ArrivalsService) isApproaching(busLat, busLng, stopLat, stopLng float64) bool {
-	// Get k-ring of 3 around stop (~500m at resolution 9)
-	neighborHexes := s.geoService.GetNeighborHexes(stopLat, stopLng, 3)
-	busHex := s.geoService.CalculateHex(busLat, busLng)
+// isApproaching determines if a device is approaching a zone
+// Uses H3 hex comparison - if device hex is in zone's k-ring, it's approaching
+func (s *GeofenceService) isApproaching(deviceLat, deviceLng, zoneLat, zoneLng float64) bool {
+	// Get k-ring of 3 around zone (~500m at resolution 9)
+	neighborHexes := s.geoService.GetNeighborHexes(zoneLat, zoneLng, 3)
+	deviceHex := s.geoService.CalculateHex(deviceLat, deviceLng)
 
-	if busHex == "" {
+	if deviceHex == "" {
 		return false
 	}
 
 	for _, hex := range neighborHexes {
-		if hex == busHex {
+		if hex == deviceHex {
 			return true
 		}
 	}
@@ -135,7 +135,7 @@ func (s *ArrivalsService) isApproaching(busLat, busLng, stopLat, stopLng float64
 //
 // CalculateETAWithTraffic calculates ETA considering traffic conditions
 // For now, this is a placeholder that uses default speed adjustment
-func (s *ArrivalsService) CalculateETAWithTraffic(fromLat, fromLng, toLat, toLng, currentSpeed float64) int {
+func (s *GeofenceService) CalculateETAWithTraffic(fromLat, fromLng, toLat, toLng, currentSpeed float64) int {
 	// In a real implementation, this would:
 	// 1. Query historical traffic data for the route
 	// 2. Adjust speed based on time of day
@@ -151,8 +151,8 @@ func (s *ArrivalsService) CalculateETAWithTraffic(fromLat, fromLng, toLat, toLng
 // Phase4Reserved: reserved for Phase 4 geofence-event wiring (CLAUDE.md §2).
 // Zero callers today. Do not delete — Phase 4 will wire this onto the request path.
 //
-// DetectArrivalEvent checks if a bus has just arrived at a stop
-func (s *ArrivalsService) DetectArrivalEvent(ctx context.Context, deviceID string, stop *models.Zone) (bool, error) {
+// DetectEntryEvent checks if a device has just entered a zone
+func (s *GeofenceService) DetectEntryEvent(ctx context.Context, deviceID string, zone *models.Zone) (bool, error) {
 	// Get current and previous location
 	currentLoc, err := s.locRepo.GetLatestLocation(ctx, deviceID)
 	if err != nil {
@@ -161,11 +161,11 @@ func (s *ArrivalsService) DetectArrivalEvent(ctx context.Context, deviceID strin
 
 	// For arrival detection, we need previous location
 	// In production, this would come from cache or a separate query
-	// For now, we just check if currently at stop
-	isAtStop := s.geoService.IsAtStop(
+	// For now, we just check if currently at zone
+	isAtZone := s.geoService.IsAtZone(
 		currentLoc.Latitude, currentLoc.Longitude,
-		stop.Latitude, stop.Longitude,
+		zone.Latitude, zone.Longitude,
 	)
 
-	return isAtStop, nil
+	return isAtZone, nil
 }

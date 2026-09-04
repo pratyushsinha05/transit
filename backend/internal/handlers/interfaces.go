@@ -7,16 +7,16 @@ import (
 	"transit-backend/internal/services"
 )
 
-// ArrivalService is the subset of arrival-prediction behavior this handler
+// GeofenceService is the subset of arrival-prediction behavior this handler
 // needs. Declared here, in the consumer package, per CLAUDE.md Sec 7.1 ("A
 // handler must depend on a service interface, not a concrete type").
-type ArrivalService interface {
-	GetArrivalsForStop(ctx context.Context, stopID string) ([]services.ArrivalPrediction, error)
+type GeofenceService interface {
+	GetPredictionsForZone(ctx context.Context, zoneID string) ([]services.GeofencePrediction, error)
 }
 
-// StopsService is the subset of stop-lookup behavior the stops handler needs.
-type StopsService interface {
-	GetStopsByRoute(ctx context.Context, routeID string) ([]models.Zone, error)
+// ZonesService is the subset of zone-lookup behavior the zones handler needs.
+type ZonesService interface {
+	GetZonesByRoute(ctx context.Context, routeID string) ([]models.Zone, error)
 }
 
 // RoutesService is the subset of route behavior the routes handler needs.
@@ -32,8 +32,8 @@ type IngestService interface {
 
 // NearbyService is the subset of geofencing behavior the nearby handler needs.
 type NearbyService interface {
-	FindNearbyBuses(ctx context.Context, lat, lng float64, radiusMeters int) ([]models.NearbyDevice, error)
-	FindNearbyStops(ctx context.Context, lat, lng float64, radiusMeters int) ([]models.Zone, error)
+	FindNearbyDevices(ctx context.Context, lat, lng float64, radiusMeters int) ([]models.NearbyDevice, error)
+	FindNearbyZones(ctx context.Context, lat, lng float64, radiusMeters int) ([]models.Zone, error)
 	CalculateHex(lat, lng float64) string
 	GetHexResolution() int
 }

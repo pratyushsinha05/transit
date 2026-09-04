@@ -23,7 +23,7 @@ func NewNearbyHandler(geoService NearbyService) *NearbyHandler {
 
 // GetNearbyBuses handles GET /api/nearby/buses
 // Query params: lat, lng, radius (meters, default 500)
-func (h *NearbyHandler) GetNearbyBuses(c echo.Context) error {
+func (h *NearbyHandler) GetNearbyDevices(c echo.Context) error {
 	// Parse query parameters
 	latStr := c.QueryParam("lat")
 	lngStr := c.QueryParam("lng")
@@ -58,24 +58,24 @@ func (h *NearbyHandler) GetNearbyBuses(c echo.Context) error {
 		}
 	}
 
-	// Query nearby buses using H3+PostGIS strategy
-	buses, err := h.geoService.FindNearbyBuses(c.Request().Context(), lat, lng, radius)
+	// Query nearby devices using H3+PostGIS strategy
+	devices, err := h.geoService.FindNearbyDevices(c.Request().Context(), lat, lng, radius)
 	if err != nil {
-		c.Logger().Error("failed to find nearby buses: ", err)
+		c.Logger().Error("failed to find nearby devices: ", err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{
 			"error": "internal server error",
 		})
 	}
 
 	// Handle nil/empty result
-	busCount := 0
-	if buses != nil {
-		busCount = len(buses)
+	deviceCount := 0
+	if devices != nil {
+		deviceCount = len(devices)
 	}
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
-		"buses":  buses,
-		"count":  busCount,
+		"buses":  devices,
+		"count":  deviceCount,
 		"radius": radius,
 		"center": map[string]float64{
 			"lat": lat,
@@ -86,7 +86,7 @@ func (h *NearbyHandler) GetNearbyBuses(c echo.Context) error {
 
 // GetNearbyStops handles GET /api/nearby/stops
 // Query params: lat, lng, radius (meters, default 500)
-func (h *NearbyHandler) GetNearbyStops(c echo.Context) error {
+func (h *NearbyHandler) GetNearbyZones(c echo.Context) error {
 	// Parse query parameters
 	latStr := c.QueryParam("lat")
 	lngStr := c.QueryParam("lng")
@@ -121,18 +121,18 @@ func (h *NearbyHandler) GetNearbyStops(c echo.Context) error {
 		}
 	}
 
-	// Query nearby stops using PostGIS
-	stops, err := h.geoService.FindNearbyStops(c.Request().Context(), lat, lng, radius)
+	// Query nearby zones using PostGIS
+	zones, err := h.geoService.FindNearbyZones(c.Request().Context(), lat, lng, radius)
 	if err != nil {
-		c.Logger().Error("failed to find nearby stops: ", err)
+		c.Logger().Error("failed to find nearby zones: ", err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{
 			"error": "internal server error",
 		})
 	}
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
-		"stops":  stops,
-		"count":  len(stops),
+		"stops":  zones,
+		"count":  len(zones),
 		"radius": radius,
 		"center": map[string]float64{
 			"lat": lat,
