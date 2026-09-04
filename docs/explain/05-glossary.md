@@ -337,9 +337,8 @@ project uses two different kinds side by side: a **GIST index** (PostGIS, exact)
 
 **`ST_DWithin`** — a PostGIS function that tests whether two geometries are within a given
 distance of each other — the SQL-level building block for "find everything near this point."
-Used in the `GET /api/nearby/buses` and `GET /api/nearby/stops` queries
-(`database/locations.go:157-178`, `database/stops.go:71-83`, inventory §3.7-3.8) — "buses" here
-is the literal route name from the demo skin, the underlying query works over any **device**.
+Used in the `GET /api/nearby/devices` and `GET /api/nearby/stops` queries
+(`database/locations.go:157-178`, `database/stops.go:71-83`, inventory §3.7-3.8) — the underlying query works over any **device**.
 *See also:* **PostGIS**.
 
 **Stop** — a fixed point on a **route** that devices are tracked against — the thing a

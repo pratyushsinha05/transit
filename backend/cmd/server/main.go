@@ -141,7 +141,7 @@ func main() {
 	api.GET("/arrivals", geofenceHandler.GetPredictions)
 
 	// Nearby queries (H3+PostGIS)
-	api.GET("/nearby/buses", nearbyHandler.GetNearbyDevices)
+	api.GET("/nearby/devices", nearbyHandler.GetNearbyDevices)
 	api.GET("/nearby/stops", nearbyHandler.GetNearbyZones)
 
 	// Geo utilities

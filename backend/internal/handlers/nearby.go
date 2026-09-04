@@ -21,7 +21,7 @@ func NewNearbyHandler(geoService NearbyService) *NearbyHandler {
 	return &NearbyHandler{geoService: geoService}
 }
 
-// GetNearbyBuses handles GET /api/nearby/buses
+// GetNearbyDevices handles GET /api/nearby/devices
 // Query params: lat, lng, radius (meters, default 500)
 func (h *NearbyHandler) GetNearbyDevices(c echo.Context) error {
 	// Parse query parameters

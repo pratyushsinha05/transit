@@ -63,7 +63,7 @@ Three things, from three different doors:
   broadcast, as JSON, to every browser tab currently connected. This is what moves the dot
   on the map without the page reloading.
 - **A read API** for the current picture — "what's near this point right now"
-  (`GET /api/nearby/buses`, `GET /api/nearby/stops`), "what's the ETA to this stop"
+  (`GET /api/nearby/devices`, `GET /api/nearby/stops`), "what's the ETA to this stop"
   (`GET /api/arrivals`), and basic route/stop lookups (inventory §3.3–§3.9).
 - **A durable table of everything that ever happened** — `location_history`, a TimescaleDB
   hypertable, which is what makes "was this device anywhere near here in the last five

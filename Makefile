@@ -596,11 +596,11 @@ test-location: ## POST a test location update
 		-H "Content-Type: application/json" \
 		-d '{"device_id":"test-bus-001","latitude":28.6139,"longitude":77.2090,"speed":25.0,"accuracy":10.0}'
 
-# Test nearby buses
-test-nearby: ## Test nearby buses endpoint
-	@echo "$(BLUE)Testing nearby buses...$(NC)"
-	@curl -s "http://localhost:8080/api/nearby/buses?lat=28.6139&lng=77.2090&radius=500" | jq '.' 2>/dev/null || \
-	curl -s "http://localhost:8080/api/nearby/buses?lat=28.6139&lng=77.2090&radius=500"
+# Test nearby devices
+test-nearby: ## Test nearby devices endpoint
+	@echo "$(BLUE)Testing nearby devices...$(NC)"
+	@curl -s "http://localhost:8080/api/nearby/devices?lat=28.6139&lng=77.2090&radius=500" | jq '.' 2>/dev/null || \
+	curl -s "http://localhost:8080/api/nearby/devices?lat=28.6139&lng=77.2090&radius=500"
 
 # Test H3 hex endpoint
 test-hex: ## Test H3 hex endpoint

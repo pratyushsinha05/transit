@@ -448,9 +448,9 @@ repository → SQL chains are assembled from [z3] (handlers), [z4]/[z4r] (servic
   WHERE t.status = 'IN_PROGRESS' AND t.current_stop < $1 AND lh.latitude IS NOT NULL
   ```
 
-### 3.7 `GET /api/nearby/buses`
+### 3.7 `GET /api/nearby/devices`
 
-- **Registered:** `main.go:143` → `nearbyHandler.GetNearbyBuses` [z1]
+- **Registered:** `main.go:144` → `nearbyHandler.GetNearbyDevices` [z1]
 - **Handler:** `handlers/nearby.go:26-85`; parses `lat` (`:28`), `lng` (`:29`), `radius`
   (`:30`, default 500, cap 10000); 400 (`:33,40,47`), 500 (`:65`), 200 (`:76`) [z3]
 - **Service:** `GeofencingService.FindNearbyBuses` — `services/geofencing.go:123-156` [z4r].

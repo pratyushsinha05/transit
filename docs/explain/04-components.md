@@ -254,7 +254,7 @@ the *H3* hex-cell lookup (`hex_res9 = ANY($1)`, `locations.go:119-132`) and the 
 history table to one current row per device (inventory §3.7).
 
 **What breaks without it?** Ingest cannot store a ping (`POST /api/location`), and
-`GET /api/nearby/buses` returns nothing.
+`GET /api/nearby/devices` returns nothing.
 
 **Orphaned methods:**
 
@@ -363,7 +363,7 @@ filter on.
 | `routes.go` (66) | `RouteHandler` (`:13-15`) | `GET`/`POST /api/routes` |
 | `stops.go` (33) | `StopHandler` (`:11-13`) | `GET /api/stops` |
 | `arrivals.go` (36) | `ArrivalHandler` (`:11-13`) | `GET /api/arrivals` |
-| `nearby.go` (184) | `NearbyHandler` (`:15-17`) | `GET /api/nearby/buses`, `/nearby/stops`, `/geo/hex` |
+| `nearby.go` (184) | `NearbyHandler` (`:15-17`) | `GET /api/nearby/devices`, `/nearby/stops`, `/geo/hex` |
 | `websocket.go` (46) | `WebSocketHandler` (`:21-23`) | `GET /ws` |
 
 `interfaces.go` (40 lines) declares the five service interfaces the handlers depend on:
@@ -548,7 +548,7 @@ straight to PostGIS via `GetBusesNearStop` at `:155` (inventory §3.7).
 have hard edges and misjudge points near a boundary. PostGIS `ST_DWithin` is exact and more
 expensive. The service picks between them by radius.
 
-**What breaks without it?** `GET /api/nearby/buses`, `GET /api/nearby/stops`, and
+**What breaks without it?** `GET /api/nearby/devices`, `GET /api/nearby/stops`, and
 `GET /api/geo/hex` all fail. `ArrivalsService` also holds it and calls `GetNeighborHexes` for
 approach detection.
 
@@ -744,7 +744,7 @@ grows without bound.
 
 **What breaks without it?** `GET /api/nearby/stops` (which has no H3 path at all — it goes
 straight to `StopRepository.GetNearby`), and the large-radius branch of
-`GET /api/nearby/buses`, which falls back to `ST_DWithin` for anything over 500m
+`GET /api/nearby/devices`, which falls back to `ST_DWithin` for anything over 500m
 (`services/geofencing.go:129,155`).
 
 **Note on `geom` for `location_history`:** inventory §4.4 flags that no zone report records an
