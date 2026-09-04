@@ -26,7 +26,6 @@ IMAGE_TAG := latest
 REGISTRY := localhost
 
 # Paths
-# Paths
 BACKEND_DIR := ./backend
 MIGRATIONS_DIR := $(BACKEND_DIR)/migrations
 CMD_SERVER := $(BACKEND_DIR)/cmd/server
@@ -34,7 +33,7 @@ CMD_SERVER := $(BACKEND_DIR)/cmd/server
 # Docker Compose
 DOCKER_COMPOSE_FILE := ./infra/docker-compose.yml
 # Auto-detect Docker Compose command (v2 or v1)
-DOCKER_COMPOSE_CMD := docker-compose
+DOCKER_COMPOSE_CMD := $(shell if docker compose version >/dev/null 2>&1; then echo "docker compose"; else echo "docker-compose"; fi)
 
 # Database Configuration
 DB_USER := transit_user
@@ -283,9 +282,9 @@ build-docker: check-docker ## Build Docker image (multi-stage: 15-20MB)
 # Build production binary locally
 build-prod: check-go ## Build production binary (optimized, stripped)
 	@echo "$(BLUE)Building production binary...$(NC)"
-	cd $(BACKEND_DIR) && CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build \
-		-o ../server \
+	cd $(BACKEND_DIR) && go build \
 		-ldflags="-s -w -X main.Version=$(VERSION) -X main.BuildTime=$(BUILD_TIME) -X main.GitHash=$(GIT_HASH)" \
+		-o ../server \
 		./cmd/server
 	@echo "$(GREEN)✓ Production binary built: server$(NC)"
 	@ls -lh server | awk '{print "  Size: " $$5}'
@@ -528,9 +527,9 @@ test-unit: check-go ## Run unit tests only (fast)
 	@echo "$(GREEN)✓ Unit tests passed$(NC)"
 
 # Run integration tests
-test-integration: check-go ## Run integration tests (requires test DB)
+test-integration: check-go ## Run integration tests (requires Docker)
 	@echo "$(BLUE)Running integration tests...$(NC)"
-	cd $(BACKEND_DIR) && go test $(GO_TEST_FLAGS) -run Integration ./...
+	cd $(BACKEND_DIR) && go test -tags=integration ./test/... -v -timeout 120s
 	@echo "$(GREEN)✓ Integration tests passed$(NC)"
 
 # Generate coverage report
@@ -631,7 +630,7 @@ test-api: test-health test-hex test-routes ## Run all API endpoint tests
 # Clean build artifacts
 clean: ## Remove build artifacts and cache
 	@echo "$(BLUE)Cleaning build artifacts...$(NC)"
-	rm -f server coverage.out coverage.html
+	rm -f server coverage.out $(BACKEND_DIR)/coverage.out coverage.html
 	go clean -cache
 	@echo "$(GREEN)✓ Cleaned$(NC)"
 
