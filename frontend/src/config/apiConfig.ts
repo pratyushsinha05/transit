@@ -11,24 +11,24 @@ export const API_CONFIG = {
     // Endpoints (based on actual Go backend)
     endpoints: {
         arrivals: {
-            path: '/api/arrivals',           // GET: Upcoming bus arrivals for stop
+            path: '/api/arrivals',           // GET: Upcoming arrivals for zone
             method: 'GET',
-            description: 'Get upcoming arrivals for a stop',
+            description: 'Get upcoming geofence events for a zone',
             timeout: 10000,
         },
 
         stops: {
-            path: '/api/stops',              // GET: All bus stops
+            path: '/api/stops',              // GET: All zones
             method: 'GET',
-            description: 'Get all bus stops with coordinates',
+            description: 'Get all zones with coordinates',
             timeout: 20000,
             cacheTime: 3600000,              // Cache for 1 hour
         },
 
         routes: {
-            path: '/api/routes',             // GET: All bus routes
+            path: '/api/routes',             // GET: All routes
             method: 'GET',
-            description: 'Get all bus routes and their patterns',
+            description: 'Get all routes and their patterns',
             timeout: 20000,
             cacheTime: 3600000,
         },
@@ -53,11 +53,11 @@ export const API_CONFIG = {
     // Response schemas (from Go backend)
     // Format: component expects these field names
     schemas: {
-        // Mirrors backend services.ArrivalPrediction exactly -- see
-        // backend/internal/services/arrivals.go. There is no bus_id, status,
+        // Mirrors backend services.GeofencePrediction exactly -- see
+        // backend/internal/services/geofence.go. There is no device_id alias, status,
         // route, or timestamp field on this response.
-        arrival: {
-            id: 'trip_id',                   // trip_id doubles as the arrival's unique ID
+        geofenceEvent: {
+            id: 'trip_id',                   // trip_id doubles as the event's unique ID
             tripId: 'trip_id',
             deviceId: 'device_id',
             deviceName: 'device_name',
@@ -67,15 +67,35 @@ export const API_CONFIG = {
             hexRes9: 'hex_res9',             // omitempty on the backend
             isApproaching: 'is_approaching',
         },
+        arrival: {
+            id: 'trip_id',
+            tripId: 'trip_id',
+            deviceId: 'device_id',
+            deviceName: 'device_name',
+            etaMinutes: 'eta_minutes',
+            distanceKm: 'distance_km',
+            currentSpeed: 'current_speed',
+            hexRes9: 'hex_res9',
+            isApproaching: 'is_approaching',
+        },
 
-        stop: {
-            id: 'id',                        // Stop ID
-            name: 'name',                    // Stop name
+        zone: {
+            id: 'id',                        // Zone ID
+            name: 'name',                    // Zone name
             lat: 'latitude',                 // Latitude (float)
             lng: 'longitude',                // Longitude (float)
             address: 'address',              // Street address
-            arrivals: 'arrivals',            // Array of upcoming arrivals (optional)
+            arrivals: 'arrivals',            // Array of upcoming events (optional)
             h3_hex: 'h3_hex',               // H3 hexagon ID (for geospatial queries)
+        },
+        stop: {
+            id: 'id',
+            name: 'name',
+            lat: 'latitude',
+            lng: 'longitude',
+            address: 'address',
+            arrivals: 'arrivals',
+            h3_hex: 'h3_hex',
         },
 
         route: {
@@ -83,18 +103,27 @@ export const API_CONFIG = {
             number: 'number',                // Route number (e.g., '42')
             name: 'name',                    // Route name
             description: 'description',      // Route description
-            stops: 'stops',                  // Array of stop IDs in order
+            stops: 'stops',                  // Array of zone IDs in order
             pattern: 'pattern',              // GeoJSON LineString of route path
         },
 
-        bus: {
-            id: 'id',                        // Bus ID
+        device: {
+            id: 'id',                        // Device ID
             routeId: 'route_id',             // Current route
             lat: 'latitude',                 // Current latitude
             lng: 'longitude',                // Current longitude
             speed: 'speed',                  // Speed in km/h
             lastUpdate: 'last_updated',      // Timestamp of last location update
             h3_hex: 'h3_hex',               // Current H3 hexagon (backend-calculated)
+        },
+        bus: {
+            id: 'id',
+            routeId: 'route_id',
+            lat: 'latitude',
+            lng: 'longitude',
+            speed: 'speed',
+            lastUpdate: 'last_updated',
+            h3_hex: 'h3_hex',
         },
 
         health: {
@@ -107,7 +136,7 @@ export const API_CONFIG = {
     // Query parameter configurations
     queryParams: {
         arrivals: {
-            stop_id: 'stop_id',              // Required: Stop ID
+            stop_id: 'stop_id',              // Required: Zone ID on wire param
         },
     },
 
@@ -125,4 +154,4 @@ export const API_CONFIG = {
         maxDelay: 5000,
         exponentialBackoff: true,
     },
-}
+};

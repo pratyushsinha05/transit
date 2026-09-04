@@ -4,15 +4,15 @@
  */
 
 import { API_CONFIG } from '../../config/apiConfig';
-import type { Arrival, Stop, BusLocation, Route } from '../../types/domain';
+import type { GeofenceEvent, Zone, DeviceLocation, Route } from '../../types/domain';
 import { logger } from '../logger';
 
-export const transformArrival = (raw: any): Arrival => {
+export const transformGeofenceEvent = (raw: any): GeofenceEvent => {
     try {
-        const schema = API_CONFIG.schemas.arrival;
+        const schema = API_CONFIG.schemas.geofenceEvent;
 
-        // Map backend services.ArrivalPrediction fields to the frontend type
-        const arrival: Arrival = {
+        // Map backend services.GeofencePrediction fields to the frontend type
+        const event: GeofenceEvent = {
             id: raw[schema.id],
             tripId: raw[schema.tripId],
             deviceId: raw[schema.deviceId],
@@ -25,52 +25,56 @@ export const transformArrival = (raw: any): Arrival => {
         };
 
         // Validation
-        if (!arrival.id || !arrival.deviceId) {
+        if (!event.id || !event.deviceId) {
             throw new Error('Missing required fields: trip_id or device_id');
         }
 
-        return arrival;
+        return event;
     } catch (error: any) {
-        logger.error('Failed to transform arrival', { raw, error });
-        throw new Error(`Invalid arrival format: ${error.message}`);
+        logger.error('Failed to transform geofence event', { raw, error });
+        throw new Error(`Invalid geofence event format: ${error.message}`);
     }
 };
 
-export const transformStop = (raw: any): Stop => {
-    try {
-        const schema = API_CONFIG.schemas.stop;
+export const transformArrival = transformGeofenceEvent;
 
-        const stop: Stop = {
+export const transformZone = (raw: any): Zone => {
+    try {
+        const schema = API_CONFIG.schemas.zone;
+
+        const zone: Zone = {
             id: raw[schema.id],
             name: raw[schema.name],
             lat: parseFloat(raw[schema.lat]),
             lng: parseFloat(raw[schema.lng]),
             address: raw[schema.address],
             h3Hex: raw[schema.h3_hex],  // Backend-calculated H3 hexagon
-            arrivals: raw[schema.arrivals]?.map(transformArrival) || [],
+            events: raw[schema.arrivals]?.map(transformGeofenceEvent) || [],
         };
 
         // Validate coordinates
-        if (isNaN(stop.lat) || isNaN(stop.lng)) {
+        if (isNaN(zone.lat) || isNaN(zone.lng)) {
             throw new Error('Invalid coordinates');
         }
 
-        if (stop.lat < -90 || stop.lat > 90 || stop.lng < -180 || stop.lng > 180) {
+        if (zone.lat < -90 || zone.lat > 90 || zone.lng < -180 || zone.lng > 180) {
             throw new Error('Coordinates out of bounds');
         }
 
-        return stop;
+        return zone;
     } catch (error) {
-        logger.error('Failed to transform stop', { raw, error });
+        logger.error('Failed to transform zone', { raw, error });
         throw error;
     }
 };
 
-export const transformBus = (raw: any): BusLocation => {
-    try {
-        const schema = API_CONFIG.schemas.bus;
+export const transformStop = transformZone;
 
-        const bus: BusLocation = {
+export const transformDevice = (raw: any): DeviceLocation => {
+    try {
+        const schema = API_CONFIG.schemas.device;
+
+        const device: DeviceLocation = {
             id: raw[schema.id],
             routeId: raw[schema.routeId],
             lat: parseFloat(raw[schema.lat]),
@@ -80,12 +84,14 @@ export const transformBus = (raw: any): BusLocation => {
             h3Hex: raw[schema.h3_hex],  // Backend-calculated geospatial hex
         };
 
-        return bus;
+        return device;
     } catch (error) {
-        logger.error('Failed to transform bus', { raw, error });
+        logger.error('Failed to transform device', { raw, error });
         throw error;
     }
 };
+
+export const transformBus = transformDevice;
 
 export const transformRoute = (raw: any): Route => {
     try {
@@ -96,7 +102,7 @@ export const transformRoute = (raw: any): Route => {
             number: raw[schema.number],
             name: raw[schema.name],
             description: raw[schema.description],
-            stops: raw[schema.stops] || [],
+            zones: raw[schema.stops] || [],
             pattern: raw[schema.pattern], // GeoJSON LineString from backend
         };
 

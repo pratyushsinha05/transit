@@ -1,56 +1,61 @@
 /**
- * useStops Hook
+ * useZones Hook
  */
 
 import { useState, useEffect, useCallback } from 'react';
 import { useStore } from '../store';
-import { fetchStops } from '../services/api/stops';
+import { fetchZones } from '../services/api/zones';
 import { logger } from '../services/logger';
 
-export const useStops = () => {
+export const useZones = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const stops = useStore(state => state.stops);
-    const setStops = useStore(state => state.setStops);
+    const zones = useStore(state => state.zones);
+    const setZones = useStore(state => state.setZones);
 
-    const getStops = useCallback(async () => {
+    const getZones = useCallback(async () => {
         // Prevent infinite loop if we already have data or if recently failed
-        if (stops.length > 0) return;
+        if (zones.length > 0) return;
 
         setLoading(true);
         setError(null);
         try {
             // Note: Backend requires route_id for /stops. 
             // If we want "all stops" we might need a different endpoint (e.g. nearby).
-            // For now, we'll try to fetch stops for a default route or just handle the error.
-            // Let's modify this to NOT fail strictly if we can't fetch "all" stops.
-            const data = await fetchStops('route-101'); // Hardcoding a default route for demo to avoid 400
-            setStops(data);
+            // For now, we'll try to fetch zones for a default route or just handle the error.
+            const data = await fetchZones('route-101'); // Hardcoding a default route for demo to avoid 400
+            setZones(data);
         } catch (err: any) {
-            const msg = err.message || 'Failed to fetch stops';
+            const msg = err.message || 'Failed to fetch zones';
             setError(msg);
             // Don't log as error if it's just a 400 from missing params during init
-            logger.warn('Error in useStops', { error: err });
+            logger.warn('Error in useZones', { error: err });
         } finally {
             setLoading(false);
         }
-    }, [stops.length, setStops]);
+    }, [zones.length, setZones]);
 
     useEffect(() => {
-        getStops();
-    }, [getStops]);
+        getZones();
+    }, [getZones]);
 
     return {
-        stops, loading, error, refresh: async () => {
+        zones,
+        stops: zones, // compatibility alias
+        loading,
+        error,
+        refresh: async () => {
             // Force refresh
             setLoading(true);
             try {
-                const data = await fetchStops();
-                setStops(data);
+                const data = await fetchZones();
+                setZones(data);
             } finally {
                 setLoading(false);
             }
         }
     };
 };
+
+export const useStops = useZones;

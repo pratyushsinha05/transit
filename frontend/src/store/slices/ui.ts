@@ -1,5 +1,5 @@
 import type { StateCreator } from 'zustand';
-import type { RouteCreatorStop } from '../../types/domain';
+import type { RouteCreatorZone } from '../../types/domain';
 
 export interface Notification {
     id: string;
@@ -12,30 +12,30 @@ export interface UiSlice {
     notifications: Notification[];
     addNotification: (notification: Omit<Notification, 'id' | 'timestamp'>) => void;
     removeNotification: (id: string) => void;
-    selectedStopId: string | null;
-    setSelectedStopId: (id: string | null) => void;
-    followedBusId: string | null;
-    setFollowedBusId: (id: string | null) => void;
+    selectedZoneId: string | null;
+    setSelectedZoneId: (id: string | null) => void;
+    followedDeviceId: string | null;
+    setFollowedDeviceId: (id: string | null) => void;
 
     // Route Creator
     routeCreatorMode: boolean;
-    routeCreatorStops: RouteCreatorStop[];
+    routeCreatorZones: RouteCreatorZone[];
     routeCreatorName: string;
     routeCreatorDescription: string;
     toggleRouteCreator: () => void;
     setRouteCreatorName: (name: string) => void;
     setRouteCreatorDescription: (desc: string) => void;
-    addCreatorStop: (lat: number, lng: number) => void;
-    removeCreatorStop: (tempId: string) => void;
-    updateCreatorStopName: (tempId: string, name: string) => void;
-    updateCreatorStopPosition: (tempId: string, lat: number, lng: number) => void;
-    reorderCreatorStops: (fromIndex: number, toIndex: number) => void;
-    clearCreatorStops: () => void;
+    addCreatorZone: (lat: number, lng: number) => void;
+    removeCreatorZone: (tempId: string) => void;
+    updateCreatorZoneName: (tempId: string, name: string) => void;
+    updateCreatorZonePosition: (tempId: string, lat: number, lng: number) => void;
+    reorderCreatorZones: (fromIndex: number, toIndex: number) => void;
+    clearCreatorZones: () => void;
 
     // Map Layers & Operations
-    layerVisibility: { stops: boolean; buses: boolean };
+    layerVisibility: { zones: boolean; devices: boolean };
     hiddenRoutes: string[];
-    toggleLayer: (layer: 'stops' | 'buses') => void;
+    toggleLayer: (layer: 'zones' | 'devices') => void;
     toggleRouteVisibility: (routeId: string) => void;
 }
 
@@ -48,17 +48,17 @@ export const createUiSlice: StateCreator<
     UiSlice
 > = (set) => ({
     notifications: [],
-    selectedStopId: null,
-    followedBusId: null,
+    selectedZoneId: null,
+    followedDeviceId: null,
 
     // Route Creator defaults
     routeCreatorMode: false,
-    routeCreatorStops: [],
+    routeCreatorZones: [],
     routeCreatorName: '',
     routeCreatorDescription: '',
 
     // Layer defaults
-    layerVisibility: { stops: true, buses: true },
+    layerVisibility: { zones: true, devices: true },
     hiddenRoutes: [],
 
     addNotification: (notification) => set((state) => ({
@@ -74,15 +74,15 @@ export const createUiSlice: StateCreator<
     removeNotification: (id) => set((state) => ({
         notifications: state.notifications.filter(n => n.id !== id),
     })),
-    setSelectedStopId: (id) => set({ selectedStopId: id, followedBusId: null }),
-    setFollowedBusId: (id) => set({ followedBusId: id, selectedStopId: null }),
+    setSelectedZoneId: (id) => set({ selectedZoneId: id, followedDeviceId: null }),
+    setFollowedDeviceId: (id) => set({ followedDeviceId: id, selectedZoneId: null }),
 
     // Route Creator actions
     toggleRouteCreator: () => set((state) => ({
         routeCreatorMode: !state.routeCreatorMode,
-        // Clear stops when exiting creator mode
+        // Clear zones when exiting creator mode
         ...(state.routeCreatorMode ? {
-            routeCreatorStops: [],
+            routeCreatorZones: [],
             routeCreatorName: '',
             routeCreatorDescription: '',
         } : {}),
@@ -91,43 +91,43 @@ export const createUiSlice: StateCreator<
     setRouteCreatorName: (name) => set({ routeCreatorName: name }),
     setRouteCreatorDescription: (desc) => set({ routeCreatorDescription: desc }),
 
-    addCreatorStop: (lat, lng) => set((state) => ({
-        routeCreatorStops: [
-            ...state.routeCreatorStops,
+    addCreatorZone: (lat, lng) => set((state) => ({
+        routeCreatorZones: [
+            ...state.routeCreatorZones,
             {
                 tempId: generateTempId(),
-                name: `STOP ${state.routeCreatorStops.length + 1}`,
+                name: `ZONE ${state.routeCreatorZones.length + 1}`,
                 lat,
                 lng,
             }
         ]
     })),
 
-    removeCreatorStop: (tempId) => set((state) => ({
-        routeCreatorStops: state.routeCreatorStops.filter(s => s.tempId !== tempId),
+    removeCreatorZone: (tempId) => set((state) => ({
+        routeCreatorZones: state.routeCreatorZones.filter(s => s.tempId !== tempId),
     })),
 
-    updateCreatorStopName: (tempId, name) => set((state) => ({
-        routeCreatorStops: state.routeCreatorStops.map(s =>
+    updateCreatorZoneName: (tempId, name) => set((state) => ({
+        routeCreatorZones: state.routeCreatorZones.map(s =>
             s.tempId === tempId ? { ...s, name } : s
         ),
     })),
 
-    updateCreatorStopPosition: (tempId, lat, lng) => set((state) => ({
-        routeCreatorStops: state.routeCreatorStops.map(s =>
+    updateCreatorZonePosition: (tempId, lat, lng) => set((state) => ({
+        routeCreatorZones: state.routeCreatorZones.map(s =>
             s.tempId === tempId ? { ...s, lat, lng } : s
         ),
     })),
 
-    reorderCreatorStops: (fromIndex, toIndex) => set((state) => {
-        const stops = [...state.routeCreatorStops];
-        const [moved] = stops.splice(fromIndex, 1);
-        stops.splice(toIndex, 0, moved);
-        return { routeCreatorStops: stops };
+    reorderCreatorZones: (fromIndex, toIndex) => set((state) => {
+        const zones = [...state.routeCreatorZones];
+        const [moved] = zones.splice(fromIndex, 1);
+        zones.splice(toIndex, 0, moved);
+        return { routeCreatorZones: zones };
     }),
 
-    clearCreatorStops: () => set({
-        routeCreatorStops: [],
+    clearCreatorZones: () => set({
+        routeCreatorZones: [],
         routeCreatorName: '',
         routeCreatorDescription: '',
     }),

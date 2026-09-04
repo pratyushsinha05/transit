@@ -6,7 +6,7 @@
 import { WS_CONFIG } from '../../config/wsConfig';
 import { useStore } from '../../store';
 import { logger } from '../logger';
-import type { BusLocation } from '../../types/domain';
+import type { DeviceLocation } from '../../types/domain';
 
 export const handleMessage = (event: MessageEvent) => {
     try {
@@ -65,13 +65,13 @@ const handleLocationUpdate = (raw: any) => {
         // Backend hub.Message fields (CLAUDE.md Sec 7.2): type, device_id,
         // route_id, latitude, longitude, speed, accuracy, h3_hex, timestamp
         // (unix seconds). Flat envelope, no `data` wrapper.
-        const deviceId = raw[schema.busId]; // schema.busId = 'device_id'
+        const deviceId = raw[schema.deviceId] || raw[schema.busId]; // schema.deviceId = 'device_id'
         if (!deviceId) return; // invalid message, skip silently
 
         const rawTs = raw[schema.lastUpdate]; // schema.lastUpdate = 'timestamp' (unix seconds)
         const lastUpdate = rawTs ? new Date(rawTs * 1000) : new Date();
 
-        const location: BusLocation = {
+        const location: DeviceLocation = {
             id: deviceId,
             routeId: raw[schema.routeId] || '', // server-resolved; '' if device has no active trip
             lat: parseFloat(raw[schema.lat]),
@@ -83,7 +83,7 @@ const handleLocationUpdate = (raw: any) => {
 
         if (isNaN(location.lat) || isNaN(location.lng)) return; // bad coordinates
 
-        useStore.getState().updateBus(location);
+        useStore.getState().updateDevice(location);
     } catch (error) {
         logger.error('Failed to process location update', { error });
     }
@@ -95,18 +95,20 @@ const handleArrivalUpdate = (raw: any) => {
     const schema = WS_CONFIG.schemas.arrivalUpdate;
 
     try {
+        const zoneId = raw[schema.zoneId] || raw[schema.stopId];
+        const deviceId = raw[schema.deviceId] || raw[schema.busId];
         const arrival = {
-            id: `${raw[schema.stopId]}_${raw[schema.busId]}_${raw[schema.routeId]}`, // Generate a frontend ID if needed
-            stopId: raw[schema.stopId],
-            busId: raw[schema.busId],
-            eta: parseInt(raw[schema.eta]),
-            status: raw[schema.status],
-            routeId: raw[schema.routeId],
-            route: raw['route_number'] || raw[schema.routeId], // Fallback
-            timestamp: new Date(raw[schema.timestamp]),
+            id: `${zoneId}_${deviceId}_${raw[schema.routeId]}`, // Generate a frontend ID if needed
+            tripId: `${zoneId}_${deviceId}_${raw[schema.routeId]}`,
+            deviceId,
+            deviceName: deviceId,
+            etaMinutes: parseInt(raw[schema.eta] ?? 0, 10),
+            distanceKm: 0,
+            currentSpeed: 0,
+            isApproaching: raw[schema.status] === 'arriving',
         };
 
-        useStore.getState().updateArrival(arrival.stopId, arrival as any);
+        useStore.getState().updateEvent(zoneId, arrival as any);
     } catch (error) {
         logger.error('Failed to process arrival update', { error });
     }

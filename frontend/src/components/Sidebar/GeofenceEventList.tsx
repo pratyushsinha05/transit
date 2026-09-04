@@ -1,22 +1,24 @@
 /**
- * Arrivals List
- * Dark HUD telemetry panel listing upcoming arrivals for a stop
+ * Geofence Event List
+ * Dark HUD telemetry panel listing upcoming geofence events for a zone
  */
 
-import { useArrivals } from '../../hooks/useArrivals';
-import { ArrivalCard } from './ArrivalCard';
+import { useGeofenceEvents } from '../../hooks/useGeofenceEvents';
+import { GeofenceEventCard } from './GeofenceEventCard';
 import { useStore } from '../../store';
 
 interface Props {
-    stopId: string;
+    zoneId?: string;
+    stopId?: string; // compatibility prop
 }
 
-export const ArrivalsList = ({ stopId }: Props) => {
-    const { arrivals, loading, error, refresh } = useArrivals(stopId);
-    const stops = useStore(state => state.stops);
-    const stop = stops.find(s => s.id === stopId);
+export const GeofenceEventList = ({ zoneId, stopId }: Props) => {
+    const targetId = zoneId || stopId || '';
+    const { events, loading, error, refresh } = useGeofenceEvents(targetId);
+    const zones = useStore(state => state.zones);
+    const zone = zones.find(z => z.id === targetId);
 
-    if (loading && arrivals.length === 0) {
+    if (loading && events.length === 0) {
         return (
             <div className="p-6 text-center">
                 <div className="w-4 h-4 border border-hud-accent/40 border-t-hud-accent rounded-full animate-spin mx-auto mb-3"></div>
@@ -45,28 +47,28 @@ export const ArrivalsList = ({ stopId }: Props) => {
 
     return (
         <div className="flex flex-col h-full">
-            {/* Stop header */}
+            {/* Zone header */}
             <div className="p-4 border-b border-hud-border bg-hud-panel/40">
-                <div className="hud-label mb-1">STOP DESIGNATION</div>
+                <div className="hud-label mb-1">ZONE DESIGNATION</div>
                 <h2 className="text-[13px] font-bold text-hud-accent tracking-hud uppercase leading-tight">
-                    {stop?.name || 'UNKNOWN'}
+                    {zone?.name || 'UNKNOWN'}
                 </h2>
-                {stop?.address && (
-                    <p className="text-[9px] text-hud-text-dim tracking-hud uppercase mt-1">{stop.address}</p>
+                {zone?.address && (
+                    <p className="text-[9px] text-hud-text-dim tracking-hud uppercase mt-1">{zone.address}</p>
                 )}
-                {stop?.h3Hex && (
+                {zone?.h3Hex && (
                     <div className="mt-2 flex items-center gap-1.5">
                         <span className="hud-label">H3 HEX</span>
-                        <code className="text-[9px] text-hud-accent/60 tracking-wider">{stop.h3Hex}</code>
+                        <code className="text-[9px] text-hud-accent/60 tracking-wider">{zone.h3Hex}</code>
                     </div>
                 )}
             </div>
 
-            {/* Arrivals section header */}
+            {/* Events section header */}
             <div className="px-4 py-2 border-b border-hud-border bg-hud-panel/20">
                 <div className="flex items-center justify-between">
                     <span className="text-[9px] font-bold text-hud-text-dim tracking-hud-wide uppercase">
-                        APPROACH VECTORS // {arrivals.length} ACTIVE
+                        APPROACH VECTORS // {events.length} ACTIVE
                     </span>
                     <button
                         onClick={refresh}
@@ -77,20 +79,22 @@ export const ArrivalsList = ({ stopId }: Props) => {
                 </div>
             </div>
 
-            {/* Arrivals list */}
+            {/* Events list */}
             <div className="flex-1 overflow-y-auto">
-                {arrivals.length === 0 ? (
+                {events.length === 0 ? (
                     <div className="text-center py-10">
                         <div className="text-[10px] text-hud-text-dim tracking-hud uppercase">
                             NO ACTIVE APPROACH VECTORS
                         </div>
                     </div>
                 ) : (
-                    arrivals.map(arrival => (
-                        <ArrivalCard key={arrival.id} arrival={arrival} />
+                    events.map(event => (
+                        <GeofenceEventCard key={event.id} event={event} />
                     ))
                 )}
             </div>
         </div>
     );
 };
+
+export const ArrivalsList = GeofenceEventList;

@@ -35,34 +35,38 @@ export const WS_CONFIG = {
         locationUpdate: {
             // Exact JSON field names from Go hub.Message struct (CLAUDE.md
             // Sec 7.2). Flat envelope, no `data` wrapper.
-            busId: 'device_id',              // hub.Message.DeviceID -> json:"device_id"
-            routeId: 'route_id',             // hub.Message.RouteID -> json:"route_id" (server-resolved, may be "")
-            lat: 'latitude',                 // hub.Message.Latitude -> json:"latitude"
-            lng: 'longitude',                // hub.Message.Longitude -> json:"longitude"
-            speed: 'speed',                  // hub.Message.Speed -> json:"speed"
-            accuracy: 'accuracy',            // hub.Message.Accuracy -> json:"accuracy"
-            h3_hex: 'h3_hex',                // hub.Message.H3Hex -> json:"h3_hex"
-            lastUpdate: 'timestamp',         // hub.Message.Timestamp -> json:"timestamp" (unix seconds)
+            deviceId: 'device_id',            // hub.Message.DeviceID -> json:"device_id"
+            busId: 'device_id',               // compatibility alias
+            routeId: 'route_id',              // hub.Message.RouteID -> json:"route_id" (server-resolved, may be "")
+            lat: 'latitude',                  // hub.Message.Latitude -> json:"latitude"
+            lng: 'longitude',                 // hub.Message.Longitude -> json:"longitude"
+            speed: 'speed',                   // hub.Message.Speed -> json:"speed"
+            accuracy: 'accuracy',             // hub.Message.Accuracy -> json:"accuracy"
+            h3_hex: 'h3_hex',                 // hub.Message.H3Hex -> json:"h3_hex"
+            lastUpdate: 'timestamp',          // hub.Message.Timestamp -> json:"timestamp" (unix seconds)
         },
 
         arrivalUpdate: {
-            stopId: 'stop_id',               // Which stop
-            busId: 'bus_id',                 // Which bus
-            eta: 'eta',                      // Minutes until arrival
-            status: 'status',                // 'on_time', 'delayed', 'arriving'
-            routeId: 'route_id',             // Route number
-            timestamp: 'timestamp',          // When update generated
+            zoneId: 'stop_id',                // Which zone
+            stopId: 'stop_id',
+            deviceId: 'bus_id',               // Which device
+            busId: 'bus_id',
+            eta: 'eta',                       // Minutes until arrival
+            status: 'status',                 // 'on_time', 'delayed', 'arriving'
+            routeId: 'route_id',              // Route number
+            timestamp: 'timestamp',           // When update generated
         },
 
         routeUpdate: {
             routeId: 'route_id',
-            pattern: 'pattern',              // GeoJSON LineString
-            stops: 'stops',                  // Array of stop IDs
+            pattern: 'pattern',               // GeoJSON LineString
+            zones: 'stops',                   // Array of zone IDs
+            stops: 'stops',
         },
 
         heartbeat: {
-            timestamp: 'timestamp',          // Server time
-            clientId: 'client_id',           // Optional: client identifier
+            timestamp: 'timestamp',           // Server time
+            clientId: 'client_id',            // Optional: client identifier
         },
     },
 
@@ -80,4 +84,4 @@ export const WS_CONFIG = {
         arrivals: 'channel:arrivals',
         system: 'channel:system',
     },
-}
+};

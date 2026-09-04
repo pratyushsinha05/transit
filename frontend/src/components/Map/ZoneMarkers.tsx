@@ -1,13 +1,13 @@
 /**
- * Stop Markers
- * Renders stops on the map as SVG crosshair reticles with HUD popups
+ * Zone Markers
+ * Renders zones on the map as SVG crosshair reticles with HUD popups
  */
 
 import { Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
-import { useStops } from '../../hooks/useStops';
+import { useZones } from '../../hooks/useZones';
 import { useStore } from '../../store';
-import { useArrivals } from '../../hooks/useArrivals';
+import { useGeofenceEvents } from '../../hooks/useGeofenceEvents';
 
 // SVG crosshair reticle icon
 const crosshairSvg = `
@@ -21,16 +21,16 @@ const crosshairSvg = `
 </svg>
 `;
 
-const stopIcon = L.divIcon({
-    className: 'stop-crosshair-marker',
+const zoneIcon = L.divIcon({
+    className: 'zone-crosshair-marker',
     html: crosshairSvg,
     iconSize: [18, 18],
     iconAnchor: [9, 9],
 });
 
-/** Inner popup component that fetches arrivals on mount */
-const StopPopupContent = ({ stopId, stopName, stopAddress }: { stopId: string; stopName: string; stopAddress?: string }) => {
-    const { arrivals } = useArrivals(stopId);
+/** Inner popup component that fetches geofence events on mount */
+const ZonePopupContent = ({ zoneId, zoneName, zoneAddress }: { zoneId: string; zoneName: string; zoneAddress?: string }) => {
+    const { events } = useGeofenceEvents(zoneId);
 
     return (
         <div className="p-3 min-w-[220px]">
@@ -40,37 +40,37 @@ const StopPopupContent = ({ stopId, stopName, stopAddress }: { stopId: string; s
                     <circle cx="5" cy="5" r="1" fill="#00f5d4" />
                 </svg>
                 <span className="text-[10px] font-bold tracking-hud-wide text-hud-accent uppercase">
-                    STOP INTEL
+                    ZONE INTEL
                 </span>
             </div>
 
             <div className="space-y-2">
                 <div>
                     <div className="hud-label">DESIGNATION</div>
-                    <div className="hud-value text-[12px]">{stopName.toUpperCase()}</div>
+                    <div className="hud-value text-[12px]">{zoneName.toUpperCase()}</div>
                 </div>
-                {stopAddress && (
+                {zoneAddress && (
                     <div>
                         <div className="hud-label">SECTOR</div>
-                        <div className="text-[10px] text-hud-text tracking-hud">{stopAddress.toUpperCase()}</div>
+                        <div className="text-[10px] text-hud-text tracking-hud">{zoneAddress.toUpperCase()}</div>
                     </div>
                 )}
 
-                {arrivals.length > 0 && (
+                {events.length > 0 && (
                     <div className="pt-2 border-t border-hud-border">
                         <div className="hud-label mb-1">INCOMING VEHICLES</div>
-                        {arrivals.slice(0, 3).map((arrival, i) => (
-                            <div key={arrival.id || i} className="flex justify-between items-center py-1 border-b border-hud-border/50 last:border-b-0">
-                                <span className="text-[10px] text-hud-text tracking-hud">{arrival.deviceName || arrival.deviceId}</span>
+                        {events.slice(0, 3).map((event, i) => (
+                            <div key={event.id || i} className="flex justify-between items-center py-1 border-b border-hud-border/50 last:border-b-0">
+                                <span className="text-[10px] text-hud-text tracking-hud">{event.deviceName || event.deviceId}</span>
                                 <span className="text-hud-accent font-bold text-[12px]">
-                                    {arrival.etaMinutes}<span className="text-[8px] text-hud-text-dim ml-0.5">MIN</span>
+                                    {event.etaMinutes}<span className="text-[8px] text-hud-text-dim ml-0.5">MIN</span>
                                 </span>
                             </div>
                         ))}
                     </div>
                 )}
 
-                {arrivals.length === 0 && (
+                {events.length === 0 && (
                     <div className="pt-2 border-t border-hud-border">
                         <div className="text-[9px] text-hud-text-dim tracking-hud text-center py-1">
                             NO ACTIVE APPROACHES
@@ -82,29 +82,29 @@ const StopPopupContent = ({ stopId, stopName, stopAddress }: { stopId: string; s
     );
 };
 
-export const StopMarkers = () => {
-    const { stops } = useStops();
-    const setSelectedStopId = useStore(state => state.setSelectedStopId);
+export const ZoneMarkers = () => {
+    const { zones } = useZones();
+    const setSelectedZoneId = useStore(state => state.setSelectedZoneId);
     const layerVisibility = useStore(state => state.layerVisibility);
 
-    if (!layerVisibility.stops) return null;
+    if (!layerVisibility.zones) return null;
 
     return (
         <>
-            {stops.map((stop) => (
+            {zones.map((zone) => (
                 <Marker
-                    key={stop.id}
-                    position={[stop.lat, stop.lng]}
-                    icon={stopIcon}
+                    key={zone.id}
+                    position={[zone.lat, zone.lng]}
+                    icon={zoneIcon}
                     eventHandlers={{
-                        click: () => setSelectedStopId(stop.id),
+                        click: () => setSelectedZoneId(zone.id),
                     }}
                 >
                     <Popup>
-                        <StopPopupContent
-                            stopId={stop.id}
-                            stopName={stop.name}
-                            stopAddress={stop.address}
+                        <ZonePopupContent
+                            zoneId={zone.id}
+                            zoneName={zone.name}
+                            zoneAddress={zone.address}
                         />
                     </Popup>
                 </Marker>
@@ -112,3 +112,5 @@ export const StopMarkers = () => {
         </>
     );
 };
+
+export const StopMarkers = ZoneMarkers;

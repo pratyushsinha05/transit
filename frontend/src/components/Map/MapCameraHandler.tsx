@@ -14,29 +14,29 @@ const DEFAULT_CENTER: [number, number] = [
 
 export const MapCameraHandler = () => {
     const map = useMap();
-    const followedBusId = useStore(state => state.followedBusId);
-    const buses = useStore(state => state.buses);
-    const setFollowedBusId = useStore(state => state.setFollowedBusId);
+    const followedDeviceId = useStore(state => state.followedDeviceId);
+    const devices = useStore(state => state.devices);
+    const setFollowedDeviceId = useStore(state => state.setFollowedDeviceId);
     
     // Follow target logic
     useEffect(() => {
-        if (!followedBusId) return;
+        if (!followedDeviceId) return;
 
-        const targetBus = buses.get(followedBusId);
-        if (targetBus) {
-            // Smoothly pan map to bus location
-            map.panTo([targetBus.lat, targetBus.lng], { animate: true, duration: 1 });
+        const targetDevice = devices.get(followedDeviceId);
+        if (targetDevice) {
+            // Smoothly pan map to device location
+            map.panTo([targetDevice.lat, targetDevice.lng], { animate: true, duration: 1 });
         } else {
-            // Bus disappeared (e.g. disconnected), drop follow lock
-            setFollowedBusId(null);
+            // Device disappeared (e.g. disconnected), drop follow lock
+            setFollowedDeviceId(null);
         }
-    }, [followedBusId, buses, map, setFollowedBusId]);
+    }, [followedDeviceId, devices, map, setFollowedDeviceId]);
 
     // Clear follow mode if user drastically interacts with the map (drags it)
     useEffect(() => {
         const handleDrag = () => {
-            if (useStore.getState().followedBusId) {
-                setFollowedBusId(null);
+            if (useStore.getState().followedDeviceId) {
+                setFollowedDeviceId(null);
             }
         };
 
@@ -44,7 +44,7 @@ export const MapCameraHandler = () => {
         return () => {
             map.off('dragstart', handleDrag);
         };
-    }, [map, setFollowedBusId]);
+    }, [map, setFollowedDeviceId]);
 
     return (
         <div className="leaflet-bottom leaflet-left pointer-events-none" style={{ bottom: 20, left: 10 }}>
@@ -53,7 +53,7 @@ export const MapCameraHandler = () => {
                 <button
                     onClick={(e) => {
                         e.stopPropagation();
-                        setFollowedBusId(null);
+                        setFollowedDeviceId(null);
                         map.flyTo(DEFAULT_CENTER, 13, { duration: 1.5 });
                     }}
                     className="w-10 h-10 bg-hud-panel/80 border border-hud-border flex items-center justify-center text-hud-accent hover:border-hud-accent/60 hover:bg-hud-panel transition-all"
@@ -66,14 +66,17 @@ export const MapCameraHandler = () => {
                     </svg>
                 </button>
 
-                {followedBusId && (
-                    <div className="bg-hud-accent/20 border border-hud-accent px-3 py-1.5 flex flex-col justify-center animate-pulse-slow backdrop-blur-sm">
-                        <span className="text-[8px] font-bold tracking-hud-wide text-hud-bright uppercase">
-                            TRACKING LOCK: {followedBusId}
-                        </span>
-                        <span className="text-[7px] text-hud-accent tracking-widest uppercase">
-                            DRAG TO ABORT
-                        </span>
+                {followedDeviceId && (
+                    <div className="px-2 py-1 bg-hud-panel/90 border border-hud-accent text-[9px] font-bold text-hud-accent tracking-hud uppercase flex items-center gap-1.5"
+                         style={{ backdropFilter: 'blur(4px)' }}>
+                        <span className="w-1.5 h-1.5 rounded-full bg-hud-accent animate-glow-pulse"></span>
+                        LOCK: {followedDeviceId}
+                        <button
+                            onClick={() => setFollowedDeviceId(null)}
+                            className="ml-1 text-hud-text-dim hover:text-hud-danger text-[10px]"
+                        >
+                            ✕
+                        </button>
                     </div>
                 )}
             </div>

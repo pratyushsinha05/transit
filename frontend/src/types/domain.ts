@@ -3,11 +3,11 @@
  * Core data structures used throughout the application
  */
 
-// Mirrors backend services.ArrivalPrediction (GET /api/arrivals). There is no
+// Mirrors backend services.GeofencePrediction (GET /api/arrivals). There is no
 // route/status/timestamp on this response -- the backend doesn't have that
 // data on this path. Do not add fields here that transformArrival can't
 // populate from a real response field.
-export interface Arrival {
+export interface GeofenceEvent {
     id: string; // = tripId; every active trip has exactly one prediction
     tripId: string;
     deviceId: string;
@@ -19,14 +19,14 @@ export interface Arrival {
     isApproaching: boolean;
 }
 
-export interface Stop {
+export interface Zone {
     id: string;
     name: string;
     lat: number;
     lng: number;
     address?: string;
     h3Hex?: string; // H3 hexagon ID from backend
-    arrivals: Arrival[];
+    events: GeofenceEvent[];
 }
 
 export interface Route {
@@ -34,11 +34,11 @@ export interface Route {
     number: string;
     name: string;
     description?: string;
-    stops: string[]; // Array of Stop IDs
+    zones: string[]; // Array of Zone IDs
     pattern?: GeoJSON.LineString; // GeoJSON path
 }
 
-export interface BusLocation {
+export interface DeviceLocation {
     id: string;
     routeId: string;
     lat: number;
@@ -63,7 +63,7 @@ export interface ConnectionState {
 
 // ── Route Creator Types ──
 
-export interface RouteCreatorStop {
+export interface RouteCreatorZone {
     tempId: string;
     name: string;
     lat: number;

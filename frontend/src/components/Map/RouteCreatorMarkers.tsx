@@ -4,9 +4,9 @@ import { useStore } from '../../store';
 import { useCallback, useEffect, useState } from 'react';
 import { getRouteGeometry } from '../../services/api/osrm';
 
-/** Create a numbered marker icon for route builder stops */
+/** Create a numbered marker icon for route builder zones */
 const createNumberedIcon = (index: number) => L.divIcon({
-    className: 'stop-crosshair-marker',
+    className: 'zone-crosshair-marker',
     html: `
         <div style="
             position: relative;
@@ -39,23 +39,23 @@ const createNumberedIcon = (index: number) => L.divIcon({
 
 export const RouteCreatorMarkers = () => {
     const routeCreatorMode = useStore(state => state.routeCreatorMode);
-    const stops = useStore(state => state.routeCreatorStops);
-    const updateCreatorStopPosition = useStore(state => state.updateCreatorStopPosition);
+    const zones = useStore(state => state.routeCreatorZones);
+    const updateCreatorZonePosition = useStore(state => state.updateCreatorZonePosition);
 
     // State to hold the snapped road polyline
     const [pathGeometry, setPathGeometry] = useState<[number, number][]>([]);
 
-    // Fetch road route whenever stops change (drag ends, added, removed, reordered)
+    // Fetch road route whenever zones change (drag ends, added, removed, reordered)
     useEffect(() => {
         let isMounted = true;
 
-        if (stops.length < 2) {
+        if (zones.length < 2) {
             setPathGeometry([]);
             return;
         }
 
         const fetchRoute = async () => {
-            const rawPoints = stops.map(s => ({ lat: s.lat, lng: s.lng }));
+            const rawPoints = zones.map(z => ({ lat: z.lat, lng: z.lng }));
             
             // Temporarily connect with straight lines while loading fast
             if (pathGeometry.length === 0) {
@@ -74,14 +74,14 @@ export const RouteCreatorMarkers = () => {
         return () => {
             isMounted = false;
         };
-    }, [stops]);
+    }, [zones]);
 
     const handleDragEnd = useCallback((tempId: string, e: L.DragEndEvent) => {
         const latlng = e.target.getLatLng();
-        updateCreatorStopPosition(tempId, latlng.lat, latlng.lng);
-    }, [updateCreatorStopPosition]);
+        updateCreatorZonePosition(tempId, latlng.lat, latlng.lng);
+    }, [updateCreatorZonePosition]);
 
-    if (!routeCreatorMode || stops.length === 0) return null;
+    if (!routeCreatorMode || zones.length === 0) return null;
 
     return (
         <>
@@ -111,19 +111,19 @@ export const RouteCreatorMarkers = () => {
                 </>
             )}
 
-            {/* Numbered stop markers */}
-            {stops.map((stop, index) => (
+            {/* Numbered zone markers */}
+            {zones.map((zone, index) => (
                 <Marker
-                    key={stop.tempId}
-                    position={[stop.lat, stop.lng]}
+                    key={zone.tempId}
+                    position={[zone.lat, zone.lng]}
                     icon={createNumberedIcon(index)}
                     draggable={true}
                     eventHandlers={{
-                        dragend: (e) => handleDragEnd(stop.tempId, e),
+                        dragend: (e) => handleDragEnd(zone.tempId, e),
                     }}
                 >
                     <Tooltip direction="right" offset={[15, 0]} permanent={false}>
-                        {stop.name}
+                        {zone.name}
                     </Tooltip>
                 </Marker>
             ))}

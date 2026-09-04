@@ -4,21 +4,21 @@
  */
 
 import { useStore } from '../../store';
-import { ArrivalsList } from './ArrivalsList';
+import { GeofenceEventList } from './GeofenceEventList';
 import { RouteCreatorPanel } from './RouteCreatorPanel';
-import { useStops } from '../../hooks/useStops';
+import { useZones } from '../../hooks/useZones';
 
 export const Sidebar = () => {
-    const selectedStopId = useStore(state => state.selectedStopId);
-    const setSelectedStopId = useStore(state => state.setSelectedStopId);
-    const { stops } = useStops();
+    const selectedZoneId = useStore(state => state.selectedZoneId);
+    const setSelectedZoneId = useStore(state => state.setSelectedZoneId);
+    const { zones } = useZones();
     const connection = useStore(state => state.connection);
-    const buses = useStore(state => state.buses);
+    const devices = useStore(state => state.devices);
     const routeCreatorMode = useStore(state => state.routeCreatorMode);
     const toggleRouteCreator = useStore(state => state.toggleRouteCreator);
 
     const isConnected = connection.status === 'connected';
-    const busCount = buses.size;
+    const deviceCount = devices.size;
 
     return (
         <div className="h-full flex flex-col bg-hud-bg w-80 relative z-[1000] border-r border-hud-border"
@@ -43,18 +43,18 @@ export const Sidebar = () => {
                     LATITUDEX
                 </h1>
                 <p className="text-[9px] text-hud-text-dim tracking-hud-wide uppercase">
-                    LIVE TRANSIT OPERATIONS
+                    LIVE TELEMETRY OPERATIONS
                 </p>
 
                 {/* Quick stats */}
                 <div className="flex gap-4 mt-3 pt-3 border-t border-hud-border">
                     <div>
-                        <div className="hud-label">VEHICLES</div>
-                        <div className="hud-value text-[16px]">{busCount}</div>
+                        <div className="hud-label">DEVICES</div>
+                        <div className="hud-value text-[16px]">{deviceCount}</div>
                     </div>
                     <div>
-                        <div className="hud-label">STOPS</div>
-                        <div className="hud-value text-[16px]">{stops.length}</div>
+                        <div className="hud-label">ZONES</div>
+                        <div className="hud-value text-[16px]">{zones.length}</div>
                     </div>
                     <div>
                         <div className="hud-label">STATUS</div>
@@ -77,7 +77,7 @@ export const Sidebar = () => {
                     <button
                         onClick={() => {
                             if (!routeCreatorMode) {
-                                setSelectedStopId(null);
+                                setSelectedZoneId(null);
                                 toggleRouteCreator();
                             }
                         }}
@@ -99,7 +99,7 @@ export const Sidebar = () => {
                     <div className="mt-3">
                         <input
                             type="text"
-                            placeholder="SEARCH STOPS..."
+                            placeholder="SEARCH ZONES..."
                             className="w-full px-3 py-1.5 bg-hud-panel border border-hud-border rounded-none text-[10px] text-hud-text tracking-hud uppercase font-mono placeholder:text-hud-text-dim focus:outline-none focus:border-hud-accent/40 transition-colors"
                             style={{ boxShadow: 'inset 0 0 4px rgba(0,0,0,0.3)' }}
                         />
@@ -111,29 +111,29 @@ export const Sidebar = () => {
             <div className="flex-1 overflow-hidden relative z-20">
                 {routeCreatorMode ? (
                     <RouteCreatorPanel />
-                ) : selectedStopId ? (
+                ) : selectedZoneId ? (
                     <div className="h-full flex flex-col">
                         <button
-                            onClick={() => setSelectedStopId(null)}
+                            onClick={() => setSelectedZoneId(null)}
                             className="flex items-center gap-2 px-4 py-2 text-[10px] text-hud-accent tracking-hud uppercase hover:bg-hud-panel border-b border-hud-border transition-colors text-left"
                         >
-                            <span className="text-hud-text-dim">◂</span> BACK TO STOP INDEX
+                            <span className="text-hud-text-dim">◂</span> BACK TO ZONE INDEX
                         </button>
-                        <ArrivalsList stopId={selectedStopId} />
+                        <GeofenceEventList zoneId={selectedZoneId} />
                     </div>
                 ) : (
                     <div className="h-full overflow-y-auto">
                         {/* Section header */}
                         <div className="px-4 py-2 border-b border-hud-border bg-hud-panel/50">
                             <span className="text-[9px] font-bold text-hud-text-dim tracking-hud-wide uppercase">
-                                STOP INDEX // {stops.length} REGISTERED
+                                ZONE INDEX // {zones.length} REGISTERED
                             </span>
                         </div>
 
-                        {stops.map((stop, index) => (
+                        {zones.map((zone, index) => (
                             <div
-                                key={stop.id}
-                                onClick={() => setSelectedStopId(stop.id)}
+                                key={zone.id}
+                                onClick={() => setSelectedZoneId(zone.id)}
                                 className="group px-4 py-3 border-b border-hud-border/50 cursor-pointer hover:bg-hud-panel/60 transition-all"
                             >
                                 <div className="flex items-start gap-3">
@@ -143,11 +143,11 @@ export const Sidebar = () => {
                                     </span>
                                     <div className="flex-1 min-w-0">
                                         <div className="text-[11px] text-hud-text tracking-hud uppercase group-hover:text-hud-accent transition-colors truncate">
-                                            {stop.name}
+                                            {zone.name}
                                         </div>
-                                        {stop.address && (
+                                        {zone.address && (
                                             <div className="text-[9px] text-hud-text-dim tracking-hud uppercase truncate mt-0.5">
-                                                {stop.address}
+                                                {zone.address}
                                             </div>
                                         )}
                                     </div>
@@ -157,7 +157,7 @@ export const Sidebar = () => {
                             </div>
                         ))}
 
-                        {stops.length === 0 && (
+                        {zones.length === 0 && (
                             <div className="px-4 py-8 text-center">
                                 <div className="text-[10px] text-hud-text-dim tracking-hud uppercase">
                                     AWAITING DATA FEED...

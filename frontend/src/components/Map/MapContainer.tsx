@@ -6,8 +6,8 @@
 import { MapContainer as LeafletMap, TileLayer, ZoomControl } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import { BusMarkers } from './BusMarkers';
-import { StopMarkers } from './StopMarkers';
+import { DeviceMarkers } from './DeviceMarkers';
+import { ZoneMarkers } from './ZoneMarkers';
 import { RoutePolyline } from './RoutePolyline';
 import { MapClickHandler } from './MapClickHandler';
 import { RouteCreatorMarkers } from './RouteCreatorMarkers';
@@ -54,8 +54,8 @@ export const MapContainer = () => {
 
             {/* Existing data layers */}
             <RoutePolyline />
-            <BusMarkers />
-            <StopMarkers />
+            <DeviceMarkers />
+            <ZoneMarkers />
 
             {/* Route creator layer */}
             <RouteCreatorMarkers />

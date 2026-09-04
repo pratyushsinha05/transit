@@ -37,23 +37,23 @@ export const OperationsPanel = () => {
                     <h3 className="hud-label mb-3">GLOBAL LAYERS</h3>
                     <div className="space-y-2">
                         <label className="flex items-center gap-3 cursor-pointer group">
-                            <div className={`w-3 h-3 border flex items-center justify-center transition-colors ${layerVisibility.stops ? 'bg-hud-accent/20 border-hud-accent' : 'border-hud-border'}`}>
-                                {layerVisibility.stops && <div className="w-1.5 h-1.5 bg-hud-accent"></div>}
+                            <div className={`w-3 h-3 border flex items-center justify-center transition-colors ${layerVisibility.zones ? 'bg-hud-accent/20 border-hud-accent' : 'border-hud-border'}`}>
+                                {layerVisibility.zones && <div className="w-1.5 h-1.5 bg-hud-accent"></div>}
                             </div>
-                            <span className={`text-[10px] tracking-hud uppercase font-mono transition-colors ${layerVisibility.stops ? 'text-hud-text-bright' : 'text-hud-text-dim'}`}>
-                                WAYPOINTS [STOPS]
+                            <span className={`text-[10px] tracking-hud uppercase font-mono transition-colors ${layerVisibility.zones ? 'text-hud-text-bright' : 'text-hud-text-dim'}`}>
+                                WAYPOINTS [ZONES]
                             </span>
-                            <input type="checkbox" className="hidden" checked={layerVisibility.stops} onChange={() => toggleLayer('stops')} />
+                            <input type="checkbox" className="hidden" checked={layerVisibility.zones} onChange={() => toggleLayer('zones')} />
                         </label>
                         
                         <label className="flex items-center gap-3 cursor-pointer group">
-                            <div className={`w-3 h-3 border flex items-center justify-center transition-colors ${layerVisibility.buses ? 'bg-hud-accent/20 border-hud-accent' : 'border-hud-border'}`}>
-                                {layerVisibility.buses && <div className="w-1.5 h-1.5 bg-hud-accent"></div>}
+                            <div className={`w-3 h-3 border flex items-center justify-center transition-colors ${layerVisibility.devices ? 'bg-hud-accent/20 border-hud-accent' : 'border-hud-border'}`}>
+                                {layerVisibility.devices && <div className="w-1.5 h-1.5 bg-hud-accent"></div>}
                             </div>
-                            <span className={`text-[10px] tracking-hud uppercase font-mono transition-colors ${layerVisibility.buses ? 'text-hud-text-bright' : 'text-hud-text-dim'}`}>
-                                VECTORS [BUSES]
+                            <span className={`text-[10px] tracking-hud uppercase font-mono transition-colors ${layerVisibility.devices ? 'text-hud-text-bright' : 'text-hud-text-dim'}`}>
+                                VECTORS [DEVICES]
                             </span>
-                            <input type="checkbox" className="hidden" checked={layerVisibility.buses} onChange={() => toggleLayer('buses')} />
+                            <input type="checkbox" className="hidden" checked={layerVisibility.devices} onChange={() => toggleLayer('devices')} />
                         </label>
                     </div>
                 </div>
