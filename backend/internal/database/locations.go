@@ -16,14 +16,6 @@ type LocationRepository struct {
 	resolution int // H3 resolution (default: 9)
 }
 
-// NewLocationRepository creates a new LocationRepository
-func NewLocationRepository(db *pgxpool.Pool) *LocationRepository {
-	return &LocationRepository{
-		db:         db,
-		resolution: 9, // Resolution 9 = ~175m edge length, ideal for geofencing
-	}
-}
-
 // NewLocationRepositoryWithResolution creates a LocationRepository with custom H3 resolution
 func NewLocationRepositoryWithResolution(db *pgxpool.Pool, resolution int) *LocationRepository {
 	return &LocationRepository{
@@ -187,24 +179,3 @@ func (r *LocationRepository) GetLatestLocation(ctx context.Context, deviceID str
 	return &loc, nil
 }
 
-// GetNeighborHexes returns the H3 k-ring (neighboring hexes) for a location
-func (r *LocationRepository) GetNeighborHexes(lat, lng float64, k int) []string {
-	latLng := h3.NewLatLng(lat, lng)
-	centerCell, err := h3.LatLngToCell(latLng, r.resolution)
-	if err != nil {
-		return nil
-	}
-
-	// GridDisk returns cells within k distance of the center
-	cells, err := h3.GridDisk(centerCell, k)
-	if err != nil {
-		return nil
-	}
-
-	hexes := make([]string, len(cells))
-	for i, cell := range cells {
-		hexes[i] = cell.String()
-	}
-
-	return hexes
-}

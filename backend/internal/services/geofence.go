@@ -81,35 +81,6 @@ func (s *GeofenceService) GetPredictionsForZone(ctx context.Context, zoneID stri
 	return predictions, nil
 }
 
-// GetNearbyPredictions returns devices approaching any zone near a point
-func (s *GeofenceService) GetNearbyPredictions(ctx context.Context, lat, lng float64, radiusMeters int) ([]GeofencePrediction, error) {
-	// 1. Find nearby zones
-	zones, err := s.geoService.FindNearbyZones(ctx, lat, lng, radiusMeters)
-	if err != nil {
-		return nil, err
-	}
-
-	// 2. Get predictions for each zone
-	var allPredictions []GeofencePrediction
-	seen := make(map[string]bool) // Deduplicate by trip ID
-
-	for _, zone := range zones {
-		predictions, err := s.GetPredictionsForZone(ctx, zone.ID)
-		if err != nil {
-			continue // Skip zones with errors
-		}
-
-		for _, p := range predictions {
-			if !seen[p.TripID] {
-				seen[p.TripID] = true
-				allPredictions = append(allPredictions, p)
-			}
-		}
-	}
-
-	return allPredictions, nil
-}
-
 // isApproaching determines if a device is approaching a zone
 // Uses H3 hex comparison - if device hex is in zone's k-ring, it's approaching
 func (s *GeofenceService) isApproaching(deviceLat, deviceLng, zoneLat, zoneLng float64) bool {

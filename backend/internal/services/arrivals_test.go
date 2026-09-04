@@ -264,43 +264,6 @@ func TestGeofenceService_GetPredictionsForZone_Errors(t *testing.T) {
 	})
 }
 
-func TestGeofenceService_GetNearbyPredictions(t *testing.T) {
-	ctx := context.Background()
-
-	mockZone := &mockZoneRepo{
-		getByIDFn: func(ctx context.Context, stopID string) (*models.Zone, error) {
-			return &models.Zone{ID: stopID, Latitude: 28.6139, Longitude: 77.2090, Sequence: 1}, nil
-		},
-		getNearbyFn: func(ctx context.Context, lat, lng float64, radiusMeters int) ([]models.Zone, error) {
-			return []models.Zone{
-				{ID: "stop-1", Latitude: 28.6139, Longitude: 77.2090, Sequence: 1},
-				{ID: "stop-2", Latitude: 28.6140, Longitude: 77.2091, Sequence: 2},
-			}, nil
-		},
-	}
-
-	mockTrip := &mockTripRepo{
-		getActiveTripsBeforeZoneFn: func(ctx context.Context, stopSequence int) ([]models.TripWithLocation, error) {
-			return []models.TripWithLocation{
-				{TripID: "trip-unique", DeviceID: "dev-1", Latitude: 28.6139, Longitude: 77.2090, Speed: 20.0},
-			}, nil
-		},
-	}
-
-	geoSvc := NewGeofencingServiceWithResolution(nil, mockZone, 9)
-	svc := NewGeofenceService(mockZone, mockTrip, nil, geoSvc)
-
-	predictions, err := svc.GetNearbyPredictions(ctx, 28.6139, 77.2090, 500)
-	if err != nil {
-		t.Fatalf("GetNearbyPredictions failed: %v", err)
-	}
-
-	// Should deduplicate "trip-unique" across zones
-	if len(predictions) != 1 || predictions[0].TripID != "trip-unique" {
-		t.Errorf("expected 1 deduplicated prediction for trip-unique, got %v", predictions)
-	}
-}
-
 func TestGeofenceService_DetectEntryEvent(t *testing.T) {
 	ctx := context.Background()
 	zone := &models.Zone{Latitude: 28.6139, Longitude: 77.2090}
