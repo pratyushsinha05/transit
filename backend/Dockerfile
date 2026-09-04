@@ -1,7 +1,7 @@
 # ============================================================================
 # Stage 1: Builder
 # ============================================================================
-FROM golang:1.23-alpine AS builder
+FROM golang:alpine AS builder
 
 # Install build dependencies (required for h3-go CGO)
 RUN apk add --no-cache git ca-certificates tzdata gcc musl-dev

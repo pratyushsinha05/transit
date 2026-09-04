@@ -19,7 +19,7 @@
 # ============================================================================
 
 PROJECT_NAME := transit-backend
-GO_VERSION := 1.23
+GO_VERSION := 1.25
 IMAGE_NAME := $(PROJECT_NAME)
 IMAGE_TAG := latest
 REGISTRY := localhost
@@ -271,7 +271,7 @@ docker-up: check-deps install-go-deps build-docker ## Spin up entire stack (rebu
 	@echo "$(YELLOW)Waiting for services to become healthy...$(NC)"
 	@RETRIES=30; \
 	until curl -sf http://localhost:8080/health >/dev/null 2>&1 || [ $$RETRIES -eq 0 ]; do \
-		echo -n "."; \
+		printf "."; \
 		sleep 1; \
 		RETRIES=$$((RETRIES - 1)); \
 	done; \
@@ -328,21 +328,21 @@ docker-health: ## Check health of all services
 	@echo ""
 	@echo "$(BLUE)Testing service connectivity:$(NC)"
 	@echo ""
-	@echo -n "  PostgreSQL (5432): "
+	@printf "  PostgreSQL (5432): "
 	@if $(DOCKER_COMPOSE_CMD) -f $(DOCKER_COMPOSE_FILE) exec -T postgres pg_isready -U $(DB_USER) >/dev/null 2>&1; then \
 		echo "$(GREEN)✓ Ready$(NC)"; \
 	else \
 		echo "$(RED)✗ Not ready$(NC)"; \
 	fi
 	@echo ""
-	@echo -n "  Redis (6379): "
+	@printf "  Redis (6379): "
 	@if $(DOCKER_COMPOSE_CMD) -f $(DOCKER_COMPOSE_FILE) exec -T redis redis-cli ping 2>/dev/null | grep -q PONG; then \
 		echo "$(GREEN)✓ Ready$(NC)"; \
 	else \
 		echo "$(RED)✗ Not ready$(NC)"; \
 	fi
 	@echo ""
-	@echo -n "  Backend (8080/health): "
+	@printf "  Backend (8080/health): "
 	@if curl -sf http://localhost:8080/health >/dev/null 2>&1; then \
 		echo "$(GREEN)✓ Ready$(NC)"; \
 	else \
@@ -389,7 +389,7 @@ db-migrate: ## Run database migrations (via Docker)
 	@echo "$(BLUE)Running database migrations...$(NC)"
 	@for f in $(MIGRATIONS_DIR)/*.sql; do \
 		echo "  Applying $$(basename $$f)..."; \
-		$(DOCKER_COMPOSE_CMD) -f $(DOCKER_COMPOSE_FILE) exec -T postgres psql -U $(DB_USER) -d $(DB_NAME) -f /docker-entrypoint-initdb.d/$$(basename $$f) 2>/dev/null || true; \
+		$(DOCKER_COMPOSE_CMD) -f $(DOCKER_COMPOSE_FILE) exec -T postgres psql -U $(DB_USER) -d $(DB_NAME) < "$$f" 2>/dev/null || true; \
 	done
 	@echo "$(GREEN)✓ Migrations completed$(NC)"
 
@@ -424,7 +424,7 @@ db-reset: ## ⚠️  DROP and RECREATE database (DEVELOPMENT ONLY)
 db-seed: ## Run seed data migration
 	@echo "$(BLUE)Seeding sample data...$(NC)"
 	@if [ -f "$(MIGRATIONS_DIR)/004_seed_data.sql" ]; then \
-		$(DOCKER_COMPOSE_CMD) -f $(DOCKER_COMPOSE_FILE) exec -T postgres psql -U $(DB_USER) -d $(DB_NAME) -f /docker-entrypoint-initdb.d/004_seed_data.sql; \
+		$(DOCKER_COMPOSE_CMD) -f $(DOCKER_COMPOSE_FILE) exec -T postgres psql -U $(DB_USER) -d $(DB_NAME) < "$(MIGRATIONS_DIR)/004_seed_data.sql"; \
 		echo "$(GREEN)✓ Sample data added$(NC)"; \
 	else \
 		echo "$(YELLOW)Seed file not found$(NC)"; \

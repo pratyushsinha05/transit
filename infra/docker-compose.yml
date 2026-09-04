@@ -20,7 +20,6 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/home/postgres/pgdata/data
-      - ../backend/migrations:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U transit_user -d transit_poc"]
       interval: 10s
