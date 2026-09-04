@@ -409,3 +409,18 @@ The HTTP handler returns 500 Internal Server Error. Fix is to either pass `maxAg
 use `($2 * INTERVAL '1 minute')`, or cast `$2::text || ' minutes'`.
 Per Rule 6, this Go defect is recorded here and NOT fixed in application code during tooling audit.
 
+## From Dead-Code Verification and Free-List Deletion
+
+**D49 — Free-list deletion pass complete (see docs/deadcode-verification.md §2).**
+Deliberately NOT deleted, each for a recorded reason:
+the six Phase4Reserved-tagged functions (council ruling, tagged in their
+own commit); `ZoneRepository.GetAll` (D8, pending product decision);
+`cfg.LogLevel` and `cfg.RedisPoolSize` (D5, pending owner decision);
+`models.Device` (CLAUDE.md §6 explicit keep); the two middleware
+hand-rolls (behavior swaps — verification §4.1 proves Echo's Recover()
+would silently drop panic detail from the client-visible error body).
+
+Also recorded: the verification found IDEAS.md has no D22 entry, despite an
+earlier task citing "D22" as evidence of an indirect-reachability trap in this
+repo. That citation was unfounded. D-numbers run with no D22.
+
