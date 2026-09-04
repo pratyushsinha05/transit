@@ -530,10 +530,10 @@ test-location: ## POST a test location update
 	@echo "$(BLUE)Sending test location...$(NC)"
 	@curl -s -X POST http://localhost:8080/api/location \
 		-H "Content-Type: application/json" \
-		-d '{"device_id":"test-bus-001","latitude":28.6139,"longitude":77.2090,"speed":25.0,"accuracy":10.0}' | jq '.' 2>/dev/null || \
+		-d '{"device_id":"bus-001","latitude":28.6139,"longitude":77.2090,"speed":25.0,"accuracy":10.0}' | jq '.' 2>/dev/null || \
 	curl -s -X POST http://localhost:8080/api/location \
 		-H "Content-Type: application/json" \
-		-d '{"device_id":"test-bus-001","latitude":28.6139,"longitude":77.2090,"speed":25.0,"accuracy":10.0}'
+		-d '{"device_id":"bus-001","latitude":28.6139,"longitude":77.2090,"speed":25.0,"accuracy":10.0}'
 
 # Test nearby devices
 test-nearby: ## Test nearby devices endpoint

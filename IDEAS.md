@@ -399,3 +399,13 @@ passing `-tags=integration ./test/...`.
 `build-prod` specified `CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build ...` on host machines (including macOS
 arm64). Because `h3-go` requires CGO, cross-compiling without a target C toolchain fails with
 `gcc: error: unrecognized command-line option`. Fixed to build an optimized stripped host binary.
+
+**D48 — `GET /api/nearby/devices` crashes with SQL parameter encoding error.**
+`backend/internal/database/locations.go:94` formats the interval query as:
+`AND lh.time > NOW() - ($2 || ' minutes')::INTERVAL`. In PostgreSQL, the `||` operator expects text
+operands (`text || text`). In Go, `maxAgeMinutes` is passed as `int` (`5`). pgx/v5 fails to encode `int`
+into PostgreSQL text format: `failed to encode args[1]: unable to encode 5 into text format for text (OID 25): cannot find encode plan`.
+The HTTP handler returns 500 Internal Server Error. Fix is to either pass `maxAgeMinutes` as string,
+use `($2 * INTERVAL '1 minute')`, or cast `$2::text || ' minutes'`.
+Per Rule 6, this Go defect is recorded here and NOT fixed in application code during tooling audit.
+
