@@ -228,7 +228,7 @@ New regression tests: `TestShutdownDrainsBufferedMessages` (an actively-read cli
 everything before close) and `TestShutdownDropsAfterDrainTimeout` (a never-read client is
 dropped only after the timeout, proving `Shutdown()` waits rather than returning instantly —
 confirmed to fail against the pre-fix code with `Shutdown()` returning in ~7µs instead of
-≥250ms). Coverage of `internal/hub` rose from 87.0% to 90.8%.
+≥250ms). Coverage of `internal/hub` rose from 87.0% to 86.1% (originally claimed 90.8%, corrected in D40).
 
 **D29 — Gorilla WebSocket ReadPump unexpected close error handling.**
 `client.go:54` excludes `CloseGoingAway` and `CloseAbnormalClosure`, but not
@@ -289,3 +289,52 @@ is not quite true at the `go.mod` level: the same two packages that appear in pr
 import paths (`database.New`, `cache.New`) now resolve to newer minor/patch versions than
 before this change, even though no production source line changed. Worth a deliberate look
 before the next dependency audit, not a defect to fix now.
+
+## From Phase 2 execution (domain vocabulary rename)
+
+**D35 — `LocationRepository.GetBusesInHex` is dead code.**
+`backend/internal/database/locations.go:79`. Two occurrences total: the declaration and its
+doc comment. It is absent from `services.LocationRepository` (`services/interfaces.go:25-30`,
+which declares only `GetBusesInHexes` and `GetBusesNearStop`) and is called nowhere. Phase 2
+renames it to `GetDevicesInHex` mechanically rather than deleting it, because deletion is a
+scope decision, not a rename. Decide separately whether the single-hex variant should exist
+at all.
+
+**D36 — `cache.NearbyBusesTTL` is dead.**
+`backend/internal/cache/interface.go:36`. Declared, never read — the only TTL actually used
+is `DeviceLocationTTL` (`redis.go:57`). Same treatment as D35: renamed to `NearbyDevicesTTL`,
+not deleted.
+
+**D37 — `CLAUDE.md` §6 was stale in five distinct ways before Phase 2 began.**
+Recorded because the pattern matters more than the individual errors: (a) the
+`models.ArrivalEvent` row names a type that no longer exists; (b) `busHex` in the locals row
+never existed; (c) the `006` migration number was a guess that the check disproved — it is
+`005`; (d) §6.1 omitted ~22 in-scope identifiers, including all of `StopsService`,
+`ArrivalPrediction`, and `IsAtStop`; (e) §6.2 lists only renamed files and omits the 16
+frontend files needing reference updates, one of which (`ui.ts`, 39 matches) has more matches
+than any file it does list. Also, §6.3's stated verify command greps `backend/internal
+backend/pkg` and omits `backend/cmd`, where main.go holds 13 matches.
+
+**D38 — `IDEAS.md` D10 and D16 are stale.**
+D10 says `models.Trip` is dead code; D16 says `models.ArrivalEvent` is dead at
+`models/trip.go:11`. Both types have since been removed — `models/trip.go` now contains
+only `TripWithLocation`. "Dead" and "absent" need different follow-ups; these entries should
+be closed, not carried.
+
+**D39 — `trips.current_stop` keeps transit vocabulary after Phase 2.**
+`migrations/001_create_tables.sql:51`. Renaming it would mean editing `004_seed_data.sql`'s
+INSERT column list, which §6.3 forbids, so Phase 2 leaves it. After this phase the schema is
+mixed: a `zones` table alongside a `current_stop` column. Resolve in whichever phase next
+touches the schema.
+
+**D40 — internal/hub coverage is nondeterministic.**
+Measured 86.1% in 4 of 5 consecutive runs, 87.3% in 1. The ~1.2pt swing is one branch, almost
+certainly drainAndClose's fast-path vs timeout-path, which depends on goroutine scheduling at
+shutdown. Any coverage gate on this package must use the observed MINIMUM (86.1%), never a
+best-observed figure — gating at 87% would fail 4 runs in 5.
+Separately: the D28 report claimed 90.8% and described it as "stable at repeated
+measurement." That figure does not reproduce and was never achievable. It propagated into
+the Phase 2 report as an inherited baseline before being caught. Same failure class as this
+project's citation errors, in a number rather than a line reference.
+
+
