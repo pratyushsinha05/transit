@@ -103,13 +103,7 @@ export const transformRoute = (raw: any): Route => {
             name: raw[schema.name],
             description: raw[schema.description],
             zones: raw[schema.stops] || [],
-            pattern: raw[schema.pattern], // GeoJSON LineString from backend
         };
-
-        // Validate GeoJSON if present
-        if (route.pattern && route.pattern.type !== 'LineString') {
-            logger.warn('Invalid route pattern type', { route });
-        }
 
         return route;
     } catch (error) {

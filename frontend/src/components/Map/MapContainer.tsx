@@ -8,7 +8,6 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { DeviceMarkers } from './DeviceMarkers';
 import { ZoneMarkers } from './ZoneMarkers';
-import { RoutePolyline } from './RoutePolyline';
 import { MapClickHandler } from './MapClickHandler';
 import { RouteCreatorMarkers } from './RouteCreatorMarkers';
 import { MapCameraHandler } from './MapCameraHandler';
@@ -53,7 +52,6 @@ export const MapContainer = () => {
             <MapClickHandler />
 
             {/* Existing data layers */}
-            <RoutePolyline />
             <DeviceMarkers />
             <ZoneMarkers />
 

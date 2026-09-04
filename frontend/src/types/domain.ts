@@ -35,7 +35,6 @@ export interface Route {
     name: string;
     description?: string;
     zones: string[]; // Array of Zone IDs
-    pattern?: GeoJSON.LineString; // GeoJSON path
 }
 
 export interface DeviceLocation {
