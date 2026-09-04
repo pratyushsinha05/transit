@@ -16,8 +16,8 @@ TIMEOUT="${HEALTH_TIMEOUT:-5}"
 
 # Perform health check
 if command -v wget >/dev/null 2>&1; then
-    # Use wget (available in Alpine)
-    wget --no-verbose --tries=1 --timeout="${TIMEOUT}" --spider "http://${HOST}:${PORT}${ENDPOINT}"
+    # Use wget (available in Alpine) - GET request discarded to /dev/null (Echo rejects HEAD with 405)
+    wget -q -O /dev/null --tries=1 --timeout="${TIMEOUT}" "http://${HOST}:${PORT}${ENDPOINT}"
 elif command -v curl >/dev/null 2>&1; then
     # Fallback to curl
     curl -sf --max-time "${TIMEOUT}" "http://${HOST}:${PORT}${ENDPOINT}" > /dev/null
