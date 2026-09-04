@@ -42,13 +42,13 @@ func (h *RouteHandler) CreateRoute(c echo.Context) error {
 	if req.Name == "" {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "name is required"})
 	}
-	if len(req.Stops) < 2 {
+	if len(req.Zones) < 2 {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "at least 2 stops are required"})
 	}
 
 	// Validate each stop has coordinates
-	for i, stop := range req.Stops {
-		if stop.Latitude == 0 && stop.Longitude == 0 {
+	for i, zone := range req.Zones {
+		if zone.Latitude == 0 && zone.Longitude == 0 {
 			return c.JSON(http.StatusBadRequest, map[string]string{
 				"error": "stop " + string(rune('1'+i)) + " has invalid coordinates",
 			})

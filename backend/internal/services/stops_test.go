@@ -10,9 +10,9 @@ import (
 func TestStopsService_GetStopsByRoute(t *testing.T) {
 	ctx := context.Background()
 	mock := &mockStopRepo{
-		getByRouteIDFn: func(ctx context.Context, routeID string) ([]models.Stop, error) {
+		getByRouteIDFn: func(ctx context.Context, routeID string) ([]models.Zone, error) {
 			if routeID == "route-1" {
-				return []models.Stop{{ID: "s-1", Name: "Stop 1", Sequence: 1}}, nil
+				return []models.Zone{{ID: "s-1", Name: "Stop 1", Sequence: 1}}, nil
 			}
 			return nil, fmt.Errorf("route not found")
 		},

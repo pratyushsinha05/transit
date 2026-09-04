@@ -50,7 +50,7 @@ func (s *ArrivalsService) GetArrivalsForStop(ctx context.Context, stopID string)
 	}
 
 	// 2. Get active trips before this stop
-	trips, err := s.tripRepo.GetActiveTripsBeforeStop(ctx, targetStop.Sequence)
+	trips, err := s.tripRepo.GetActiveTripsBeforeZone(ctx, targetStop.Sequence)
 	if err != nil {
 		return nil, err
 	}
@@ -152,7 +152,7 @@ func (s *ArrivalsService) CalculateETAWithTraffic(fromLat, fromLng, toLat, toLng
 // Zero callers today. Do not delete — Phase 4 will wire this onto the request path.
 //
 // DetectArrivalEvent checks if a bus has just arrived at a stop
-func (s *ArrivalsService) DetectArrivalEvent(ctx context.Context, deviceID string, stop *models.Stop) (bool, error) {
+func (s *ArrivalsService) DetectArrivalEvent(ctx context.Context, deviceID string, stop *models.Zone) (bool, error) {
 	// Get current and previous location
 	currentLoc, err := s.locRepo.GetLatestLocation(ctx, deviceID)
 	if err != nil {

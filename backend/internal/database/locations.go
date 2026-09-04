@@ -74,9 +74,9 @@ func (r *LocationRepository) Insert(ctx context.Context, loc *models.Location) e
 	return err
 }
 
-// GetBusesInHex returns all buses within a specific H3 hex (fast index scan)
+// GetDevicesInHex returns all devices within a specific H3 hex (fast index scan)
 // This is the first pass of the H3+PostGIS strategy
-func (r *LocationRepository) GetBusesInHex(ctx context.Context, hex string, maxAgeMinutes int) ([]models.NearbyBus, error) {
+func (r *LocationRepository) GetDevicesInHex(ctx context.Context, hex string, maxAgeMinutes int) ([]models.NearbyDevice, error) {
 	query := `
 		SELECT DISTINCT ON (lh.device_id)
 			lh.device_id,
@@ -94,24 +94,24 @@ func (r *LocationRepository) GetBusesInHex(ctx context.Context, hex string, maxA
 
 	rows, err := r.db.Query(ctx, query, hex, maxAgeMinutes)
 	if err != nil {
-		return nil, fmt.Errorf("query buses in hex: %w", err)
+		return nil, fmt.Errorf("query devices in hex: %w", err)
 	}
 	defer rows.Close()
 
-	var buses []models.NearbyBus
+	var devices []models.NearbyDevice
 	for rows.Next() {
-		var b models.NearbyBus
-		if err := rows.Scan(&b.DeviceID, &b.DeviceName, &b.Latitude, &b.Longitude, &b.Speed, &b.HexRes9); err != nil {
-			return nil, fmt.Errorf("scan bus: %w", err)
+		var d models.NearbyDevice
+		if err := rows.Scan(&d.DeviceID, &d.DeviceName, &d.Latitude, &d.Longitude, &d.Speed, &d.HexRes9); err != nil {
+			return nil, fmt.Errorf("scan device: %w", err)
 		}
-		buses = append(buses, b)
+		devices = append(devices, d)
 	}
 
-	return buses, rows.Err()
+	return devices, rows.Err()
 }
 
-// GetBusesInHexes returns buses in multiple H3 hexes (for k-ring queries)
-func (r *LocationRepository) GetBusesInHexes(ctx context.Context, hexes []string, maxAgeMinutes int) ([]models.NearbyBus, error) {
+// GetDevicesInHexes returns devices in multiple H3 hexes (for k-ring queries)
+func (r *LocationRepository) GetDevicesInHexes(ctx context.Context, hexes []string, maxAgeMinutes int) ([]models.NearbyDevice, error) {
 	if len(hexes) == 0 {
 		return nil, nil
 	}
@@ -133,25 +133,25 @@ func (r *LocationRepository) GetBusesInHexes(ctx context.Context, hexes []string
 
 	rows, err := r.db.Query(ctx, query, hexes, maxAgeMinutes)
 	if err != nil {
-		return nil, fmt.Errorf("query buses in hexes: %w", err)
+		return nil, fmt.Errorf("query devices in hexes: %w", err)
 	}
 	defer rows.Close()
 
-	var buses []models.NearbyBus
+	var devices []models.NearbyDevice
 	for rows.Next() {
-		var b models.NearbyBus
-		if err := rows.Scan(&b.DeviceID, &b.DeviceName, &b.Latitude, &b.Longitude, &b.Speed, &b.HexRes9); err != nil {
-			return nil, fmt.Errorf("scan bus: %w", err)
+		var d models.NearbyDevice
+		if err := rows.Scan(&d.DeviceID, &d.DeviceName, &d.Latitude, &d.Longitude, &d.Speed, &d.HexRes9); err != nil {
+			return nil, fmt.Errorf("scan device: %w", err)
 		}
-		buses = append(buses, b)
+		devices = append(devices, d)
 	}
 
-	return buses, rows.Err()
+	return devices, rows.Err()
 }
 
-// GetBusesNearStop uses PostGIS for accurate distance queries
+// GetDevicesNearZone uses PostGIS for accurate distance queries
 // This is the refinement pass of the H3+PostGIS strategy
-func (r *LocationRepository) GetBusesNearStop(ctx context.Context, lat, lng float64, radiusMeters int, maxAgeMinutes int) ([]models.NearbyBus, error) {
+func (r *LocationRepository) GetDevicesNearZone(ctx context.Context, lat, lng float64, radiusMeters int, maxAgeMinutes int) ([]models.NearbyDevice, error) {
 	// Use PostGIS ST_DWithin for accurate spatial query with GIST index
 	// ST_DWithin expects geography type (meters) rather than geometry (degrees)
 	query := `
@@ -179,20 +179,20 @@ func (r *LocationRepository) GetBusesNearStop(ctx context.Context, lat, lng floa
 
 	rows, err := r.db.Query(ctx, query, lat, lng, radiusMeters, maxAgeMinutes)
 	if err != nil {
-		return nil, fmt.Errorf("query buses near stop: %w", err)
+		return nil, fmt.Errorf("query devices near zone: %w", err)
 	}
 	defer rows.Close()
 
-	var buses []models.NearbyBus
+	var devices []models.NearbyDevice
 	for rows.Next() {
-		var b models.NearbyBus
-		if err := rows.Scan(&b.DeviceID, &b.DeviceName, &b.Latitude, &b.Longitude, &b.Speed, &b.Distance, &b.HexRes9); err != nil {
-			return nil, fmt.Errorf("scan bus: %w", err)
+		var d models.NearbyDevice
+		if err := rows.Scan(&d.DeviceID, &d.DeviceName, &d.Latitude, &d.Longitude, &d.Speed, &d.Distance, &d.HexRes9); err != nil {
+			return nil, fmt.Errorf("scan device: %w", err)
 		}
-		buses = append(buses, b)
+		devices = append(devices, d)
 	}
 
-	return buses, rows.Err()
+	return devices, rows.Err()
 }
 
 // GetLatestLocation returns the most recent location for a device

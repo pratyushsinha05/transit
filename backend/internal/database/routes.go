@@ -58,9 +58,9 @@ func (r *RouteRepository) Create(ctx context.Context, req models.CreateRouteRequ
 	}
 
 	// Insert stops with sequence numbers and PostGIS geom
-	stopIDs := make([]string, 0, len(req.Stops))
-	for i, stop := range req.Stops {
-		var stopID string
+	zoneIDs := make([]string, 0, len(req.Zones))
+	for i, zone := range req.Zones {
+		var zoneID string
 		err = tx.QueryRow(ctx,
 			`INSERT INTO stops (id, route_id, name, latitude, longitude, sequence_number, geom)
 			 VALUES (
@@ -68,12 +68,12 @@ func (r *RouteRepository) Create(ctx context.Context, req models.CreateRouteRequ
 				$1, $2, $3::numeric, $4::numeric, $5,
 				ST_SetSRID(ST_MakePoint($4::numeric, $3::numeric), 4326)
 			 ) RETURNING id`,
-			routeID, stop.Name, stop.Latitude, stop.Longitude, i+1,
-		).Scan(&stopID)
+			routeID, zone.Name, zone.Latitude, zone.Longitude, i+1,
+		).Scan(&zoneID)
 		if err != nil {
 			return nil, fmt.Errorf("insert stop %d: %w", i+1, err)
 		}
-		stopIDs = append(stopIDs, stopID)
+		zoneIDs = append(zoneIDs, zoneID)
 	}
 
 	if err := tx.Commit(ctx); err != nil {
@@ -84,7 +84,7 @@ func (r *RouteRepository) Create(ctx context.Context, req models.CreateRouteRequ
 		ID:          routeID,
 		Name:        req.Name,
 		Description: req.Description,
-		StopCount:   len(req.Stops),
-		StopIDs:     stopIDs,
+		ZoneCount:   len(req.Zones),
+		ZoneIDs:     zoneIDs,
 	}, nil
 }

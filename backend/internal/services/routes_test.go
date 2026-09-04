@@ -57,7 +57,7 @@ func TestRoutesService_CreateRoute(t *testing.T) {
 	ctx := context.Background()
 	req := models.CreateRouteRequest{
 		Name: "New Route",
-		Stops: []models.CreateStopInput{
+		Zones: []models.CreateZoneInput{
 			{Name: "Stop 1", Latitude: 28.6, Longitude: 77.2},
 			{Name: "Stop 2", Latitude: 28.7, Longitude: 77.3},
 		},
@@ -68,15 +68,15 @@ func TestRoutesService_CreateRoute(t *testing.T) {
 			return &models.CreateRouteResponse{
 				ID:        "route-created-1",
 				Name:      r.Name,
-				StopCount: len(r.Stops),
-				StopIDs:   []string{"s1", "s2"},
+				ZoneCount: len(r.Zones),
+				ZoneIDs:   []string{"s1", "s2"},
 			}, nil
 		},
 	}
 
 	svc := NewRoutesService(mock)
 	res, err := svc.CreateRoute(ctx, req)
-	if err != nil || res.ID != "route-created-1" || res.StopCount != 2 {
+	if err != nil || res.ID != "route-created-1" || res.ZoneCount != 2 {
 		t.Errorf("unexpected CreateRoute result: %+v, err: %v", res, err)
 	}
 }

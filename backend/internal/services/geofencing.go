@@ -129,7 +129,7 @@ func (s *GeofencingService) GetNeighborHexes(lat, lng float64, k int) []string {
 // FindNearbyBuses returns buses near a point using the H3+PostGIS combo strategy
 // Step 1: H3 pre-filter (fast index scan)
 // Step 2: PostGIS refine (accurate distance)
-func (s *GeofencingService) FindNearbyBuses(ctx context.Context, lat, lng float64, radiusMeters int) ([]models.NearbyBus, error) {
+func (s *GeofencingService) FindNearbyBuses(ctx context.Context, lat, lng float64, radiusMeters int) ([]models.NearbyDevice, error) {
 	// For small radius (< 500m), H3 k-ring + PostGIS refinement is fastest
 	// For larger radius, direct PostGIS query might be better
 	if radiusMeters <= 500 {
@@ -147,7 +147,7 @@ func (s *GeofencingService) FindNearbyBuses(ctx context.Context, lat, lng float6
 		}
 
 		// Step 2: Query buses in those hexes (H3 pre-filter)
-		buses, err := s.locRepo.GetBusesInHexes(ctx, hexes, 5) // 5 min max age
+		buses, err := s.locRepo.GetDevicesInHexes(ctx, hexes, 5) // 5 min max age
 		if err != nil {
 			return nil, err
 		}
@@ -158,11 +158,11 @@ func (s *GeofencingService) FindNearbyBuses(ctx context.Context, lat, lng float6
 	}
 
 	// For larger radius, use PostGIS directly (it has GIST index)
-	return s.locRepo.GetBusesNearStop(ctx, lat, lng, radiusMeters, 5)
+	return s.locRepo.GetDevicesNearZone(ctx, lat, lng, radiusMeters, 5)
 }
 
 // FindNearbyStops returns stops near a point
-func (s *GeofencingService) FindNearbyStops(ctx context.Context, lat, lng float64, radiusMeters int) ([]models.Stop, error) {
+func (s *GeofencingService) FindNearbyStops(ctx context.Context, lat, lng float64, radiusMeters int) ([]models.Zone, error) {
 	// For now, delegate to stop repository
 	// In future, could add H3 pre-filtering for stops as well
 	return s.stopRepo.GetNearby(ctx, lat, lng, radiusMeters)
@@ -175,7 +175,7 @@ func (s *GeofencingService) FindNearbyStops(ctx context.Context, lat, lng float6
 // Arrival is detected when:
 // - Bus was NOT at stop in previous location
 // - Bus IS at stop in current location
-func (s *GeofencingService) DetectArrival(oldLoc, newLoc *models.Location, stop *models.Stop) bool {
+func (s *GeofencingService) DetectArrival(oldLoc, newLoc *models.Location, stop *models.Zone) bool {
 	if oldLoc == nil || newLoc == nil || stop == nil {
 		return false
 	}
@@ -190,7 +190,7 @@ func (s *GeofencingService) DetectArrival(oldLoc, newLoc *models.Location, stop 
 // Zero callers today. Do not delete — Phase 4 will wire this onto the request path.
 //
 // DetectDeparture checks if a bus has departed from a stop
-func (s *GeofencingService) DetectDeparture(oldLoc, newLoc *models.Location, stop *models.Stop) bool {
+func (s *GeofencingService) DetectDeparture(oldLoc, newLoc *models.Location, stop *models.Zone) bool {
 	if oldLoc == nil || newLoc == nil || stop == nil {
 		return false
 	}

@@ -10,11 +10,11 @@ type Route struct {
 type CreateRouteRequest struct {
 	Name        string            `json:"name" validate:"required"`
 	Description string            `json:"description"`
-	Stops       []CreateStopInput `json:"stops" validate:"required,min=2"`
+	Zones       []CreateZoneInput `json:"stops" validate:"required,min=2"`
 }
 
-// CreateStopInput represents a single stop in the create route request
-type CreateStopInput struct {
+// CreateZoneInput represents a single zone in the create route request
+type CreateZoneInput struct {
 	Name      string  `json:"name" validate:"required"`
 	Latitude  float64 `json:"latitude" validate:"required"`
 	Longitude float64 `json:"longitude" validate:"required"`
@@ -25,6 +25,6 @@ type CreateRouteResponse struct {
 	ID          string   `json:"id"`
 	Name        string   `json:"name"`
 	Description string   `json:"description"`
-	StopCount   int      `json:"stop_count"`
-	StopIDs     []string `json:"stop_ids"`
+	ZoneCount   int      `json:"stop_count"`
+	ZoneIDs     []string `json:"stop_ids"`
 }

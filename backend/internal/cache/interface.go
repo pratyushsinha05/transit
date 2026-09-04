@@ -32,8 +32,8 @@ const (
 	// 5 minutes is sufficient as bus locations update every few seconds
 	DeviceLocationTTL = 5 * time.Minute
 
-	// NearbyBusesTTL is the TTL for cached nearby buses results
-	NearbyBusesTTL = 10 * time.Second
+	// NearbyDevicesTTL is the TTL for cached nearby devices results
+	NearbyDevicesTTL = 10 * time.Second
 )
 
 // Key prefixes for cache organization

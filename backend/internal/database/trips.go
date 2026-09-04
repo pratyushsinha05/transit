@@ -16,7 +16,7 @@ func NewTripRepository(db *pgxpool.Pool) *TripRepository {
 	return &TripRepository{db: db}
 }
 
-func (r *TripRepository) GetActiveTripsBeforeStop(ctx context.Context, stopSequence int) ([]models.TripWithLocation, error) {
+func (r *TripRepository) GetActiveTripsBeforeZone(ctx context.Context, stopSequence int) ([]models.TripWithLocation, error) {
 	// Logic:
 	// 1. Get active trips (current_stop < sequence)
 	// 2. Lateral join with location_history to get latest position

@@ -11,10 +11,10 @@ import (
 
 // mockLocationRepo is a test double for LocationRepository.
 type mockLocationRepo struct {
-	insertFn           func(ctx context.Context, loc *models.Location) error
-	getLatestFn        func(ctx context.Context, deviceID string) (*models.Location, error)
-	getBusesInHexesFn  func(ctx context.Context, hexes []string, maxAgeMinutes int) ([]models.NearbyBus, error)
-	getBusesNearStopFn func(ctx context.Context, lat, lng float64, radiusMeters int, maxAgeMinutes int) ([]models.NearbyBus, error)
+	insertFn             func(ctx context.Context, loc *models.Location) error
+	getLatestFn          func(ctx context.Context, deviceID string) (*models.Location, error)
+	getDevicesInHexesFn  func(ctx context.Context, hexes []string, maxAgeMinutes int) ([]models.NearbyDevice, error)
+	getDevicesNearZoneFn func(ctx context.Context, lat, lng float64, radiusMeters int, maxAgeMinutes int) ([]models.NearbyDevice, error)
 }
 
 func (m *mockLocationRepo) Insert(ctx context.Context, loc *models.Location) error {
@@ -31,42 +31,42 @@ func (m *mockLocationRepo) GetLatestLocation(ctx context.Context, deviceID strin
 	return nil, nil
 }
 
-func (m *mockLocationRepo) GetBusesInHexes(ctx context.Context, hexes []string, maxAgeMinutes int) ([]models.NearbyBus, error) {
-	if m.getBusesInHexesFn != nil {
-		return m.getBusesInHexesFn(ctx, hexes, maxAgeMinutes)
+func (m *mockLocationRepo) GetDevicesInHexes(ctx context.Context, hexes []string, maxAgeMinutes int) ([]models.NearbyDevice, error) {
+	if m.getDevicesInHexesFn != nil {
+		return m.getDevicesInHexesFn(ctx, hexes, maxAgeMinutes)
 	}
 	return nil, nil
 }
 
-func (m *mockLocationRepo) GetBusesNearStop(ctx context.Context, lat, lng float64, radiusMeters int, maxAgeMinutes int) ([]models.NearbyBus, error) {
-	if m.getBusesNearStopFn != nil {
-		return m.getBusesNearStopFn(ctx, lat, lng, radiusMeters, maxAgeMinutes)
+func (m *mockLocationRepo) GetDevicesNearZone(ctx context.Context, lat, lng float64, radiusMeters int, maxAgeMinutes int) ([]models.NearbyDevice, error) {
+	if m.getDevicesNearZoneFn != nil {
+		return m.getDevicesNearZoneFn(ctx, lat, lng, radiusMeters, maxAgeMinutes)
 	}
 	return nil, nil
 }
 
 // mockStopRepo is a test double for StopRepository.
 type mockStopRepo struct {
-	getByIDFn      func(ctx context.Context, stopID string) (*models.Stop, error)
-	getByRouteIDFn func(ctx context.Context, routeID string) ([]models.Stop, error)
-	getNearbyFn    func(ctx context.Context, lat, lng float64, radiusMeters int) ([]models.Stop, error)
+	getByIDFn      func(ctx context.Context, stopID string) (*models.Zone, error)
+	getByRouteIDFn func(ctx context.Context, routeID string) ([]models.Zone, error)
+	getNearbyFn    func(ctx context.Context, lat, lng float64, radiusMeters int) ([]models.Zone, error)
 }
 
-func (m *mockStopRepo) GetByID(ctx context.Context, stopID string) (*models.Stop, error) {
+func (m *mockStopRepo) GetByID(ctx context.Context, stopID string) (*models.Zone, error) {
 	if m.getByIDFn != nil {
 		return m.getByIDFn(ctx, stopID)
 	}
 	return nil, nil
 }
 
-func (m *mockStopRepo) GetByRouteID(ctx context.Context, routeID string) ([]models.Stop, error) {
+func (m *mockStopRepo) GetByRouteID(ctx context.Context, routeID string) ([]models.Zone, error) {
 	if m.getByRouteIDFn != nil {
 		return m.getByRouteIDFn(ctx, routeID)
 	}
 	return nil, nil
 }
 
-func (m *mockStopRepo) GetNearby(ctx context.Context, lat, lng float64, radiusMeters int) ([]models.Stop, error) {
+func (m *mockStopRepo) GetNearby(ctx context.Context, lat, lng float64, radiusMeters int) ([]models.Zone, error) {
 	if m.getNearbyFn != nil {
 		return m.getNearbyFn(ctx, lat, lng, radiusMeters)
 	}
@@ -217,7 +217,7 @@ func TestGeofencingService_GetNeighborHexes(t *testing.T) {
 
 func TestGeofencingService_DetectArrivalAndDeparture(t *testing.T) {
 	svc := NewGeofencingServiceWithResolution(nil, nil, 9)
-	stop := &models.Stop{Latitude: 28.6139, Longitude: 77.2090}
+	stop := &models.Zone{Latitude: 28.6139, Longitude: 77.2090}
 
 	atStopLoc := &models.Location{Latitude: 28.6139, Longitude: 77.2090}
 	farLoc := &models.Location{Latitude: 28.6500, Longitude: 77.2500}
@@ -259,10 +259,10 @@ func TestGeofencingService_FindNearbyBuses_SmallRadiusKRing(t *testing.T) {
 	var queryMaxAge int
 
 	mockLoc := &mockLocationRepo{
-		getBusesInHexesFn: func(ctx context.Context, hexes []string, maxAgeMinutes int) ([]models.NearbyBus, error) {
+		getDevicesInHexesFn: func(ctx context.Context, hexes []string, maxAgeMinutes int) ([]models.NearbyDevice, error) {
 			queryHexes = hexes
 			queryMaxAge = maxAgeMinutes
-			return []models.NearbyBus{
+			return []models.NearbyDevice{
 				{DeviceID: "bus-1", Latitude: 28.6139, Longitude: 77.2090, Speed: 25.0},
 			}, nil
 		},
@@ -292,9 +292,9 @@ func TestGeofencingService_FindNearbyBuses_LargeRadiusPostGIS(t *testing.T) {
 	var directCalled bool
 
 	mockLoc := &mockLocationRepo{
-		getBusesNearStopFn: func(ctx context.Context, lat, lng float64, radiusMeters int, maxAgeMinutes int) ([]models.NearbyBus, error) {
+		getDevicesNearZoneFn: func(ctx context.Context, lat, lng float64, radiusMeters int, maxAgeMinutes int) ([]models.NearbyDevice, error) {
 			directCalled = true
-			return []models.NearbyBus{
+			return []models.NearbyDevice{
 				{DeviceID: "bus-2", Latitude: 28.6139, Longitude: 77.2090, Speed: 15.0},
 			}, nil
 		},
@@ -319,8 +319,8 @@ func TestGeofencingService_FindNearbyBuses_LargeRadiusPostGIS(t *testing.T) {
 func TestGeofencingService_FindNearbyStops(t *testing.T) {
 	ctx := context.Background()
 	mockStop := &mockStopRepo{
-		getNearbyFn: func(ctx context.Context, lat, lng float64, radiusMeters int) ([]models.Stop, error) {
-			return []models.Stop{
+		getNearbyFn: func(ctx context.Context, lat, lng float64, radiusMeters int) ([]models.Zone, error) {
+			return []models.Zone{
 				{ID: "stop-1", Name: "CP Outer Circle", Latitude: lat, Longitude: lng},
 			}, nil
 		},
@@ -339,7 +339,7 @@ func TestGeofencingService_FindNearbyStops(t *testing.T) {
 func TestGeofencingService_FindNearbyBuses_RepoError(t *testing.T) {
 	ctx := context.Background()
 	mockLoc := &mockLocationRepo{
-		getBusesInHexesFn: func(ctx context.Context, hexes []string, maxAgeMinutes int) ([]models.NearbyBus, error) {
+		getDevicesInHexesFn: func(ctx context.Context, hexes []string, maxAgeMinutes int) ([]models.NearbyDevice, error) {
 			return nil, fmt.Errorf("db query error")
 		},
 	}

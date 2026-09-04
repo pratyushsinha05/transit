@@ -23,8 +23,8 @@ type LocationUpdate struct {
 	HexRes9   string  `json:"hex_res9,omitempty"`
 }
 
-// NearbyBus represents a bus near a specific location
-type NearbyBus struct {
+// NearbyDevice represents a device near a specific location
+type NearbyDevice struct {
 	DeviceID   string  `json:"device_id"`
 	DeviceName string  `json:"device_name,omitempty"`
 	Latitude   float64 `json:"latitude"`

@@ -33,7 +33,7 @@ var (
 	_ handlers.RoutesService         = (*services.RoutesService)(nil)
 	_ handlers.IngestService         = (*services.IngestService)(nil)
 	_ handlers.NearbyService         = (*services.GeofencingService)(nil)
-	_ services.StopRepository        = (*database.StopRepository)(nil)
+	_ services.StopRepository        = (*database.ZoneRepository)(nil)
 	_ services.TripRepository        = (*database.TripRepository)(nil)
 	_ services.LocationRepository    = (*database.LocationRepository)(nil)
 	_ services.RouteRepository       = (*database.RouteRepository)(nil)
@@ -76,7 +76,7 @@ func main() {
 
 	// 4. Initialize Repositories
 	locRepo := database.NewLocationRepositoryWithResolution(dbPool, cfg.H3Resolution)
-	stopRepo := database.NewStopRepository(dbPool)
+	stopRepo := database.NewZoneRepository(dbPool)
 	tripRepo := database.NewTripRepository(dbPool)
 	routeRepo := database.NewRouteRepository(dbPool)
 	deviceRouteRepo := database.NewDeviceRouteRepository(dbPool)

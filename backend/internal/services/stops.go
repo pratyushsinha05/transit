@@ -17,6 +17,6 @@ func NewStopsService(stopRepo StopRepository) *StopsService {
 }
 
 // GetStopsByRoute returns all stops for a route, ordered by sequence.
-func (s *StopsService) GetStopsByRoute(ctx context.Context, routeID string) ([]models.Stop, error) {
+func (s *StopsService) GetStopsByRoute(ctx context.Context, routeID string) ([]models.Zone, error) {
 	return s.stopRepo.GetByRouteID(ctx, routeID)
 }

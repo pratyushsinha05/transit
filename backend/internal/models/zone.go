@@ -1,6 +1,6 @@
 package models
 
-type Stop struct {
+type Zone struct {
 	ID        string  `json:"id"`
 	Name      string  `json:"name"`
 	Latitude  float64 `json:"latitude"`

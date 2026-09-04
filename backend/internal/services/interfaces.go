@@ -10,14 +10,14 @@ import (
 // needs. Declared here, in the consumer package, per CLAUDE.md Sec 7.1 ("A
 // service must depend on a repository interface, not a concrete type").
 type StopRepository interface {
-	GetByID(ctx context.Context, stopID string) (*models.Stop, error)
-	GetByRouteID(ctx context.Context, routeID string) ([]models.Stop, error)
-	GetNearby(ctx context.Context, lat, lng float64, radiusMeters int) ([]models.Stop, error)
+	GetByID(ctx context.Context, stopID string) (*models.Zone, error)
+	GetByRouteID(ctx context.Context, routeID string) ([]models.Zone, error)
+	GetNearby(ctx context.Context, lat, lng float64, radiusMeters int) ([]models.Zone, error)
 }
 
 // TripRepository is the subset of trip-storage behavior the services layer needs.
 type TripRepository interface {
-	GetActiveTripsBeforeStop(ctx context.Context, stopSequence int) ([]models.TripWithLocation, error)
+	GetActiveTripsBeforeZone(ctx context.Context, stopSequence int) ([]models.TripWithLocation, error)
 }
 
 // LocationRepository is the subset of location-storage behavior the services
@@ -25,8 +25,8 @@ type TripRepository interface {
 type LocationRepository interface {
 	Insert(ctx context.Context, loc *models.Location) error
 	GetLatestLocation(ctx context.Context, deviceID string) (*models.Location, error)
-	GetBusesInHexes(ctx context.Context, hexes []string, maxAgeMinutes int) ([]models.NearbyBus, error)
-	GetBusesNearStop(ctx context.Context, lat, lng float64, radiusMeters int, maxAgeMinutes int) ([]models.NearbyBus, error)
+	GetDevicesInHexes(ctx context.Context, hexes []string, maxAgeMinutes int) ([]models.NearbyDevice, error)
+	GetDevicesNearZone(ctx context.Context, lat, lng float64, radiusMeters int, maxAgeMinutes int) ([]models.NearbyDevice, error)
 }
 
 // RouteRepository is the subset of route-storage behavior the services layer needs.

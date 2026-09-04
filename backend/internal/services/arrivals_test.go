@@ -11,12 +11,12 @@ import (
 )
 
 type mockTripRepo struct {
-	getActiveTripsBeforeStopFn func(ctx context.Context, stopSequence int) ([]models.TripWithLocation, error)
+	getActiveTripsBeforeZoneFn func(ctx context.Context, stopSequence int) ([]models.TripWithLocation, error)
 }
 
-func (m *mockTripRepo) GetActiveTripsBeforeStop(ctx context.Context, stopSequence int) ([]models.TripWithLocation, error) {
-	if m.getActiveTripsBeforeStopFn != nil {
-		return m.getActiveTripsBeforeStopFn(ctx, stopSequence)
+func (m *mockTripRepo) GetActiveTripsBeforeZone(ctx context.Context, stopSequence int) ([]models.TripWithLocation, error) {
+	if m.getActiveTripsBeforeZoneFn != nil {
+		return m.getActiveTripsBeforeZoneFn(ctx, stopSequence)
 	}
 	return nil, nil
 }
@@ -157,11 +157,11 @@ func TestArrivalsService_GetArrivalsForStop(t *testing.T) {
 	stopLat, stopLng := 28.6139, 77.2090
 
 	mockStop := &mockStopRepo{
-		getByIDFn: func(ctx context.Context, stopID string) (*models.Stop, error) {
+		getByIDFn: func(ctx context.Context, stopID string) (*models.Zone, error) {
 			if stopID != "stop-101" {
 				return nil, fmt.Errorf("stop not found")
 			}
-			return &models.Stop{
+			return &models.Zone{
 				ID:        "stop-101",
 				Name:      "Connaught Place",
 				Latitude:  stopLat,
@@ -172,7 +172,7 @@ func TestArrivalsService_GetArrivalsForStop(t *testing.T) {
 	}
 
 	mockTrip := &mockTripRepo{
-		getActiveTripsBeforeStopFn: func(ctx context.Context, stopSequence int) ([]models.TripWithLocation, error) {
+		getActiveTripsBeforeZoneFn: func(ctx context.Context, stopSequence int) ([]models.TripWithLocation, error) {
 			if stopSequence != 5 {
 				t.Errorf("expected stopSequence 5, got %d", stopSequence)
 			}
@@ -234,7 +234,7 @@ func TestArrivalsService_GetArrivalsForStop_Errors(t *testing.T) {
 
 	t.Run("StopNotFound", func(t *testing.T) {
 		mockStop := &mockStopRepo{
-			getByIDFn: func(ctx context.Context, stopID string) (*models.Stop, error) {
+			getByIDFn: func(ctx context.Context, stopID string) (*models.Zone, error) {
 				return nil, fmt.Errorf("stop not found")
 			},
 		}
@@ -247,12 +247,12 @@ func TestArrivalsService_GetArrivalsForStop_Errors(t *testing.T) {
 
 	t.Run("TripRepoError", func(t *testing.T) {
 		mockStop := &mockStopRepo{
-			getByIDFn: func(ctx context.Context, stopID string) (*models.Stop, error) {
-				return &models.Stop{ID: "stop-1", Sequence: 2}, nil
+			getByIDFn: func(ctx context.Context, stopID string) (*models.Zone, error) {
+				return &models.Zone{ID: "stop-1", Sequence: 2}, nil
 			},
 		}
 		mockTrip := &mockTripRepo{
-			getActiveTripsBeforeStopFn: func(ctx context.Context, stopSequence int) ([]models.TripWithLocation, error) {
+			getActiveTripsBeforeZoneFn: func(ctx context.Context, stopSequence int) ([]models.TripWithLocation, error) {
 				return nil, fmt.Errorf("trip db error")
 			},
 		}
@@ -268,11 +268,11 @@ func TestArrivalsService_GetNearbyArrivals(t *testing.T) {
 	ctx := context.Background()
 
 	mockStop := &mockStopRepo{
-		getByIDFn: func(ctx context.Context, stopID string) (*models.Stop, error) {
-			return &models.Stop{ID: stopID, Latitude: 28.6139, Longitude: 77.2090, Sequence: 1}, nil
+		getByIDFn: func(ctx context.Context, stopID string) (*models.Zone, error) {
+			return &models.Zone{ID: stopID, Latitude: 28.6139, Longitude: 77.2090, Sequence: 1}, nil
 		},
-		getNearbyFn: func(ctx context.Context, lat, lng float64, radiusMeters int) ([]models.Stop, error) {
-			return []models.Stop{
+		getNearbyFn: func(ctx context.Context, lat, lng float64, radiusMeters int) ([]models.Zone, error) {
+			return []models.Zone{
 				{ID: "stop-1", Latitude: 28.6139, Longitude: 77.2090, Sequence: 1},
 				{ID: "stop-2", Latitude: 28.6140, Longitude: 77.2091, Sequence: 2},
 			}, nil
@@ -280,7 +280,7 @@ func TestArrivalsService_GetNearbyArrivals(t *testing.T) {
 	}
 
 	mockTrip := &mockTripRepo{
-		getActiveTripsBeforeStopFn: func(ctx context.Context, stopSequence int) ([]models.TripWithLocation, error) {
+		getActiveTripsBeforeZoneFn: func(ctx context.Context, stopSequence int) ([]models.TripWithLocation, error) {
 			return []models.TripWithLocation{
 				{TripID: "trip-unique", DeviceID: "dev-1", Latitude: 28.6139, Longitude: 77.2090, Speed: 20.0},
 			}, nil
@@ -303,7 +303,7 @@ func TestArrivalsService_GetNearbyArrivals(t *testing.T) {
 
 func TestArrivalsService_DetectArrivalEvent(t *testing.T) {
 	ctx := context.Background()
-	stop := &models.Stop{Latitude: 28.6139, Longitude: 77.2090}
+	stop := &models.Zone{Latitude: 28.6139, Longitude: 77.2090}
 
 	t.Run("AtStop", func(t *testing.T) {
 		mockLoc := &mockLocationRepo{
