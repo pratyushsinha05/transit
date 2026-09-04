@@ -254,7 +254,7 @@ rebuild-backend: ## Rebuild backend in running container (fast iteration)
 # ============================================================================
 
 # MAIN TARGET: Spin up entire Docker stack
-docker-up: check-deps install-go-deps build-docker ## Spin up entire stack (dependencies verified first)
+docker-up: check-deps install-go-deps build-docker ## Spin up entire stack (rebuilds image, waits for health)
 	@echo ""
 	@echo "$(BLUE)╔════════════════════════════════════════════════════════════════╗$(NC)"
 	@echo "$(BLUE)║                  STARTING DOCKER STACK                         ║$(NC)"
@@ -266,12 +266,20 @@ docker-up: check-deps install-go-deps build-docker ## Spin up entire stack (depe
 	@echo "  3. PostgreSQL migrations (init container)"
 	@echo "  4. Backend (Go service)"
 	@echo ""
-	$(DOCKER_COMPOSE_CMD) -f $(DOCKER_COMPOSE_FILE) up -d
+	$(DOCKER_COMPOSE_CMD) -f $(DOCKER_COMPOSE_FILE) up -d --build
 	@echo ""
-	@echo "$(YELLOW)Waiting for services to initialize...$(NC)"
-	@sleep 5
-	@echo "$(YELLOW)Checking service health...$(NC)"
-	@sleep 3
+	@echo "$(YELLOW)Waiting for services to become healthy...$(NC)"
+	@RETRIES=30; \
+	until curl -sf http://localhost:8080/health >/dev/null 2>&1 || [ $$RETRIES -eq 0 ]; do \
+		echo -n "."; \
+		sleep 1; \
+		RETRIES=$$((RETRIES - 1)); \
+	done; \
+	echo ""; \
+	if [ $$RETRIES -eq 0 ]; then \
+		echo "$(RED)✗ Backend failed to become healthy within 30s$(NC)"; \
+		exit 1; \
+	fi
 	@$(MAKE) docker-health
 
 
