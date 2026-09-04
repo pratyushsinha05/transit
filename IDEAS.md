@@ -370,5 +370,32 @@ same shape as D13 (`heading`). Not fixed here — and note that it would be *res
 deleted, if D41/D42 were ever done, since persisting the polyline is exactly what would make
 this component work.
 
+## From Tooling & Scripts Audit (Phase 5)
 
+**D44 — `backend/Dockerfile` pinned `golang:1.23-alpine` while `backend/go.mod` required `go >= 1.25.0`.**
+When `go.mod` was updated to `go 1.25.0` in Phase 1C (`D34`), `backend/Dockerfile` was left with
+`FROM golang:1.23-alpine AS builder`. Any `docker build` failed during `go mod download && go mod verify`
+with `go: go.mod requires go >= 1.25.0 (running go 1.23.12; GOTOOLCHAIN=local)`. Builder image updated
+to `golang:alpine` to track Go toolchain requirements.
 
+**D45 — `infra/docker-compose.yml` dual-migration collision on fresh volumes.**
+`infra/docker-compose.yml` mounted `../backend/migrations:/docker-entrypoint-initdb.d:ro` into the Postgres
+container while `backend/cmd/server/main.go` also invoked `database.RunMigrations` on startup. On a fresh volume,
+Postgres initdb executed 001-005 (renaming `stops` to `zones`), but did not populate `schema_migrations`. When
+the backend container booted, `RunMigrations` re-executed migrations from 001. `001_create_tables.sql` recreated
+`stops` (`CREATE TABLE IF NOT EXISTS stops`), `002_add_indexes.sql` recreated `idx_stops_geom`, and
+`005_rename_stops_zones.sql` crashed on `ALTER INDEX IF EXISTS idx_stops_geom RENAME TO idx_zones_geom` with
+`relation "idx_zones_geom" already exists (SQLSTATE 42P07)`, putting the backend in a crash-restart loop.
+Resolved by removing the live migrations mount from `docker-compose.yml` and letting `main.go` be the single
+authority for schema migrations.
+
+**D46 — `make test-integration` reported false positive pass when 0 integration tests ran.**
+The previous Makefile target `test-integration` invoked `go test $(GO_TEST_FLAGS) -run Integration ./...`.
+Because `backend/test/integration_test.go` uses the `//go:build integration` build tag, standard package
+traversal omitted it. The target printed `✓ Integration tests passed` despite executing 0 tests. Fixed by
+passing `-tags=integration ./test/...`.
+
+**D47 — `make build-prod` attempted cross-compilation with CGO enabled without a cross-compiler.**
+`build-prod` specified `CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build ...` on host machines (including macOS
+arm64). Because `h3-go` requires CGO, cross-compiling without a target C toolchain fails with
+`gcc: error: unrecognized command-line option`. Fixed to build an optimized stripped host binary.
