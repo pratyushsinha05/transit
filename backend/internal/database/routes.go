@@ -62,7 +62,7 @@ func (r *RouteRepository) Create(ctx context.Context, req models.CreateRouteRequ
 	for i, zone := range req.Zones {
 		var zoneID string
 		err = tx.QueryRow(ctx,
-			`INSERT INTO stops (id, route_id, name, latitude, longitude, sequence_number, geom)
+			`INSERT INTO zones (id, route_id, name, latitude, longitude, sequence_number, geom)
 			 VALUES (
 				'stop-' || substr(md5(random()::text), 1, 8),
 				$1, $2, $3::numeric, $4::numeric, $5,

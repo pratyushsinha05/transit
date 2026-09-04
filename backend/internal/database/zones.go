@@ -22,7 +22,7 @@ func NewZoneRepository(db *pgxpool.Pool) *ZoneRepository {
 func (r *ZoneRepository) GetByRouteID(ctx context.Context, routeID string) ([]models.Zone, error) {
 	query := `
 		SELECT id, name, latitude, longitude, sequence_number
-		FROM stops
+		FROM zones
 		WHERE route_id = $1
 		ORDER BY sequence_number
 	`
@@ -53,7 +53,7 @@ func (r *ZoneRepository) GetByRouteID(ctx context.Context, routeID string) ([]mo
 func (r *ZoneRepository) GetByID(ctx context.Context, zoneID string) (*models.Zone, error) {
 	query := `
 		SELECT id, name, latitude, longitude, sequence_number
-		FROM stops
+		FROM zones
 		WHERE id = $1
 	`
 	var z models.Zone
@@ -70,7 +70,7 @@ func (r *ZoneRepository) GetNearby(ctx context.Context, lat, lng float64, radius
 	// Falls back to Haversine-style query if PostGIS geom column doesn't exist
 	query := `
 		SELECT id, name, latitude, longitude, sequence_number
-		FROM stops
+		FROM zones
 		WHERE ST_DWithin(
 			geom::geography,
 			ST_SetSRID(ST_MakePoint($2, $1), 4326)::geography,
@@ -104,7 +104,7 @@ func (r *ZoneRepository) GetNearby(ctx context.Context, lat, lng float64, radius
 func (r *ZoneRepository) GetAll(ctx context.Context) ([]models.Zone, error) {
 	query := `
 		SELECT id, name, latitude, longitude, sequence_number
-		FROM stops
+		FROM zones
 		ORDER BY route_id, sequence_number
 	`
 

@@ -430,6 +430,15 @@ func TestIntegration_LocationIngestToWebSocketBroadcast(t *testing.T) {
 	if cachedLoc.HexRes9 != wantHex {
 		t.Errorf("redis hex_res9 = %q, want %q", cachedLoc.HexRes9, wantHex)
 	}
+
+	// --- 16. Assert zones table exists and has seeded rows (Phase 2 migration proof). ---
+	var zoneCount int
+	if err := dbPool.QueryRow(setupCtx, "SELECT count(*) FROM zones").Scan(&zoneCount); err != nil {
+		t.Fatalf("query zones count: %v", err)
+	}
+	if zoneCount != 15 {
+		t.Errorf("zones count = %d, want 15", zoneCount)
+	}
 }
 
 // startPostgres starts the real production Postgres image
