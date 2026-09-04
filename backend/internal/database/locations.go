@@ -74,42 +74,6 @@ func (r *LocationRepository) Insert(ctx context.Context, loc *models.Location) e
 	return err
 }
 
-// GetDevicesInHex returns all devices within a specific H3 hex (fast index scan)
-// This is the first pass of the H3+PostGIS strategy
-func (r *LocationRepository) GetDevicesInHex(ctx context.Context, hex string, maxAgeMinutes int) ([]models.NearbyDevice, error) {
-	query := `
-		SELECT DISTINCT ON (lh.device_id)
-			lh.device_id,
-			COALESCE(d.name, lh.device_id) as device_name,
-			lh.latitude,
-			lh.longitude,
-			lh.speed,
-			lh.hex_res9
-		FROM location_history lh
-		LEFT JOIN devices d ON lh.device_id = d.id
-		WHERE lh.hex_res9 = $1
-		  AND lh.time > NOW() - ($2 || ' minutes')::INTERVAL
-		ORDER BY lh.device_id, lh.time DESC
-	`
-
-	rows, err := r.db.Query(ctx, query, hex, maxAgeMinutes)
-	if err != nil {
-		return nil, fmt.Errorf("query devices in hex: %w", err)
-	}
-	defer rows.Close()
-
-	var devices []models.NearbyDevice
-	for rows.Next() {
-		var d models.NearbyDevice
-		if err := rows.Scan(&d.DeviceID, &d.DeviceName, &d.Latitude, &d.Longitude, &d.Speed, &d.HexRes9); err != nil {
-			return nil, fmt.Errorf("scan device: %w", err)
-		}
-		devices = append(devices, d)
-	}
-
-	return devices, rows.Err()
-}
-
 // GetDevicesInHexes returns devices in multiple H3 hexes (for k-ring queries)
 func (r *LocationRepository) GetDevicesInHexes(ctx context.Context, hexes []string, maxAgeMinutes int) ([]models.NearbyDevice, error) {
 	if len(hexes) == 0 {
