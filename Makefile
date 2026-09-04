@@ -6,13 +6,12 @@
 
 .PHONY: help check-deps check-system check-docker check-go check-tools
 .PHONY: verify-setup check-go-deps install-go-deps verify-go-deps
-.PHONY: install-system install-docker install-go install-all
 .PHONY: build build-docker build-prod rebuild-backend
 .PHONY: docker-up docker-down docker-clean docker-logs docker-health
 .PHONY: docker-ps docker-shell docker-health-backend docker-restart
 .PHONY: db-migrate db-reset db-seed db-shell db-info
 .PHONY: test test-unit test-integration test-coverage fmt vet lint lint-layering
-.PHONY: run dev dev-backend dev-docker
+.PHONY: run dev dev-docker
 .PHONY: clean clean-all clean-docker version info
 
 # ============================================================================
@@ -195,69 +194,7 @@ verify-go-deps: ## Show all Go dependency versions
 		echo "  ✓ $$dep $$version"; \
 	done
 
-# ============================================================================
-# PHASE 2: INSTALLATION HELPERS
-# ============================================================================
 
-# Show system dependency installation instructions
-install-system: ## Show system dependency installation instructions
-	@echo "$(BLUE)System Dependency Installation$(NC)"
-	@echo ""
-	@echo "$(GREEN)macOS (using Homebrew):$(NC)"
-	@echo "  brew install make git postgresql@15 redis jq"
-	@echo ""
-	@echo "$(GREEN)Ubuntu / Debian:$(NC)"
-	@echo "  sudo apt-get update"
-	@echo "  sudo apt-get install build-essential git postgresql-client redis-tools jq"
-	@echo ""
-	@echo "$(GREEN)After installation, verify:$(NC)"
-	@echo "  make --version"
-	@echo "  go version"
-	@echo "  git --version"
-	@echo ""
-
-# Show Docker installation instructions
-install-docker: ## Show Docker installation instructions
-	@echo "$(BLUE)Docker Installation$(NC)"
-	@echo ""
-	@echo "$(GREEN)Official Download:$(NC)"
-	@echo "  https://www.docker.com/products/docker-desktop"
-	@echo ""
-	@echo "$(GREEN)macOS (using Homebrew):$(NC)"
-	@echo "  brew install --cask docker"
-	@echo ""
-	@echo "$(GREEN)After installation, verify:$(NC)"
-	@echo "  docker --version"
-	@echo "  docker run hello-world"
-	@echo ""
-
-# Show Go installation instructions
-install-go: ## Show Go installation instructions
-	@echo "$(BLUE)Go Installation (1.21+)$(NC)"
-	@echo ""
-	@echo "$(GREEN)Official Download:$(NC)"
-	@echo "  https://golang.org/dl/"
-	@echo ""
-	@echo "$(GREEN)macOS (using Homebrew):$(NC)"
-	@echo "  brew install go"
-	@echo ""
-	@echo "$(GREEN)After installation, verify:$(NC)"
-	@echo "  go version    # Must show go1.21+$(NC)"
-	@echo ""
-
-# Show all installation instructions
-install-all: ## Show all installation instructions
-	@echo "$(BLUE)╔════════════════════════════════════════════════════════════════╗$(NC)"
-	@echo "$(BLUE)║            COMPLETE INSTALLATION GUIDE                         ║$(NC)"
-	@echo "$(BLUE)╚════════════════════════════════════════════════════════════════╝$(NC)"
-	@echo ""
-	@$(MAKE) install-system
-	@$(MAKE) install-docker
-	@$(MAKE) install-go
-	@echo "$(YELLOW)After installing all dependencies, run:$(NC)"
-	@echo "  make check-deps"
-	@echo "  make docker-up"
-	@echo ""
 
 # ============================================================================
 # PHASE 3: DOCKER BUILD & OPERATIONS
@@ -337,11 +274,6 @@ docker-up: check-deps install-go-deps build-docker ## Spin up entire stack (depe
 	@sleep 3
 	@$(MAKE) docker-health
 
-# Quick start (skip dependency checks for faster iteration)
-docker-up-quick: build-docker ## Quick start without full dependency checks
-	$(DOCKER_COMPOSE_CMD) -f $(DOCKER_COMPOSE_FILE) up -d
-	@sleep 5
-	@$(MAKE) docker-health
 
 # Stop containers (keep volumes)
 docker-down: ## Stop all containers (preserve volumes)
