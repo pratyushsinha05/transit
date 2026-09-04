@@ -4,7 +4,7 @@
  */
 
 import { API_CONFIG } from '../../config/apiConfig';
-import type { GeofenceEvent, Zone, DeviceLocation, Route } from '../../types/domain';
+import type { GeofenceEvent, Zone, Route } from '../../types/domain';
 import { logger } from '../logger';
 
 export const transformGeofenceEvent = (raw: any): GeofenceEvent => {
@@ -69,29 +69,6 @@ export const transformZone = (raw: any): Zone => {
 };
 
 export const transformStop = transformZone;
-
-export const transformDevice = (raw: any): DeviceLocation => {
-    try {
-        const schema = API_CONFIG.schemas.device;
-
-        const device: DeviceLocation = {
-            id: raw[schema.id],
-            routeId: raw[schema.routeId],
-            lat: parseFloat(raw[schema.lat]),
-            lng: parseFloat(raw[schema.lng]),
-            speed: parseFloat(raw[schema.speed] || 0),
-            lastUpdate: new Date(raw[schema.lastUpdate]),
-            h3Hex: raw[schema.h3_hex],  // Backend-calculated geospatial hex
-        };
-
-        return device;
-    } catch (error) {
-        logger.error('Failed to transform device', { raw, error });
-        throw error;
-    }
-};
-
-export const transformBus = transformDevice;
 
 export const transformRoute = (raw: any): Route => {
     try {

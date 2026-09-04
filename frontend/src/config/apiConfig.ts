@@ -104,7 +104,6 @@ export const API_CONFIG = {
             name: 'name',                    // Route name
             description: 'description',      // Route description
             stops: 'stops',                  // Array of zone IDs in order
-            pattern: 'pattern',              // GeoJSON LineString of route path
         },
 
         device: {

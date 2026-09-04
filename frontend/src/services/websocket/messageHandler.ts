@@ -18,28 +18,8 @@ export const handleMessage = (event: MessageEvent) => {
 
         // Route based on backend message type
         switch (messageType) {
-            case WS_CONFIG.messageTypes.connected:
-                handleConnected(raw);
-                break;
-
             case WS_CONFIG.messageTypes.location_update:
                 handleLocationUpdate(raw);
-                break;
-
-            case WS_CONFIG.messageTypes.arrival_update:
-                handleArrivalUpdate(raw);
-                break;
-
-            case WS_CONFIG.messageTypes.route_update:
-                handleRouteUpdate(raw);
-                break;
-
-            case WS_CONFIG.messageTypes.heartbeat:
-                handleHeartbeat(raw);
-                break;
-
-            case WS_CONFIG.messageTypes.error:
-                handleError(raw);
                 break;
 
             default:
@@ -49,13 +29,6 @@ export const handleMessage = (event: MessageEvent) => {
     } catch (error) {
         logger.error('Failed to parse WebSocket message', { error });
     }
-};
-
-const handleConnected = (_raw: any) => {
-    logger.info('Connected to WebSocket server');
-
-    // Update connection state via store action
-    useStore.getState().setConnectionStatus('connected');
 };
 
 const handleLocationUpdate = (raw: any) => {
@@ -87,50 +60,4 @@ const handleLocationUpdate = (raw: any) => {
     } catch (error) {
         logger.error('Failed to process location update', { error });
     }
-};
-
-// Dead: backend never emits this message type. Kept as scaffolding for
-// Phase 4 (GEOFENCE_EVENT) or future message types. See hub/message.go.
-const handleArrivalUpdate = (raw: any) => {
-    const schema = WS_CONFIG.schemas.arrivalUpdate;
-
-    try {
-        const zoneId = raw[schema.zoneId] || raw[schema.stopId];
-        const deviceId = raw[schema.deviceId] || raw[schema.busId];
-        const arrival = {
-            id: `${zoneId}_${deviceId}_${raw[schema.routeId]}`, // Generate a frontend ID if needed
-            tripId: `${zoneId}_${deviceId}_${raw[schema.routeId]}`,
-            deviceId,
-            deviceName: deviceId,
-            etaMinutes: parseInt(raw[schema.eta] ?? 0, 10),
-            distanceKm: 0,
-            currentSpeed: 0,
-            isApproaching: raw[schema.status] === 'arriving',
-        };
-
-        useStore.getState().updateEvent(zoneId, arrival as any);
-    } catch (error) {
-        logger.error('Failed to process arrival update', { error });
-    }
-};
-
-// Dead: backend never emits this message type. Kept as scaffolding.
-const handleRouteUpdate = (raw: any) => {
-    // Routes usually static, but if updates come:
-    logger.info('Route update received', { routeId: raw.route_id });
-    // Implement if needed to update route path live
-};
-
-// Dead: backend never emits JSON heartbeats (protocol-level ping/pong is used).
-const handleHeartbeat = (_raw: any) => {
-    useStore.getState().updateHeartbeat(new Date());
-};
-
-// Dead: backend never emits this message type. Kept as scaffolding.
-const handleError = (raw: any) => {
-    logger.error('Backend reported error', { message: raw.message });
-    useStore.getState().addNotification({
-        type: 'error',
-        message: `Backend Error: ${raw.message}`
-    });
 };

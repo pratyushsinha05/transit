@@ -10,24 +10,8 @@ export const WS_CONFIG = {
 
     // Message types sent by Go backend
     messageTypes: {
-        // Connection lifecycle
-        connected: 'connected',            // Backend: "{type: 'connected'}"
-        disconnected: 'disconnected',
-        heartbeat: 'heartbeat',            // Ping-pong every 30s
-        heartbeat_ack: 'heartbeat_ack',
-
         // Real-time location updates
         location_update: 'LOCATION_UPDATE', // Must match Go const MsgTypeLocationUpdate
-
-        // Real-time arrival updates
-        arrival_update: 'arrival_update',   // ETA updated for arrival
-
-        // Route information
-        route_update: 'route_update',       // Route pattern/stops updated
-
-        // Error/system messages
-        system_message: 'system_message',
-        error: 'error',
     },
 
     // Message schema mappings (what backend sends)
@@ -59,7 +43,6 @@ export const WS_CONFIG = {
 
         routeUpdate: {
             routeId: 'route_id',
-            pattern: 'pattern',               // GeoJSON LineString
             zones: 'stops',                   // Array of zone IDs
             stops: 'stops',
         },
