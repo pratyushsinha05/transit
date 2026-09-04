@@ -178,4 +178,3 @@ func (r *LocationRepository) GetLatestLocation(ctx context.Context, deviceID str
 
 	return &loc, nil
 }
-

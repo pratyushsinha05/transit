@@ -11,7 +11,7 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-// RedisCache implements CacheStore interface using Redis
+// RedisCache implements Redis caching operations
 type RedisCache struct {
 	client *redis.Client
 }
@@ -71,7 +71,6 @@ func (c *RedisCache) Close() error {
 // --- Legacy Compatibility ---
 
 // DeviceCache is kept for backward compatibility with existing handlers
-// Deprecated: Use CacheStore interface methods instead
 type DeviceCache struct {
 	rdb *RedisCache
 }
@@ -104,6 +103,3 @@ func (c *DeviceCache) SetDeviceState(ctx context.Context, deviceID string, state
 
 	return c.rdb.SetDeviceLocation(ctx, deviceID, loc)
 }
-
-// Ensure RedisCache implements CacheStore interface
-var _ CacheStore = (*RedisCache)(nil)

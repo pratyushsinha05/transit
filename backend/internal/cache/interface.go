@@ -1,7 +1,6 @@
 package cache
 
 import (
-	"context"
 	"time"
 )
 
@@ -14,18 +13,6 @@ type DeviceLocation struct {
 	LastSeen  int64   `json:"last_seen"`
 }
 
-// CacheStore defines the interface for cache operations
-type CacheStore interface {
-	// Device location operations (TTL: 5 minutes)
-	SetDeviceLocation(ctx context.Context, deviceID string, loc *DeviceLocation) error
-
-	// Health check
-	Ping(ctx context.Context) error
-
-	// Close connection
-	Close() error
-}
-
 // TTL constants - every key has a TTL, no permanent keys
 const (
 	// DeviceLocationTTL is the TTL for device location cache entries
@@ -35,8 +22,5 @@ const (
 
 // Key prefixes for cache organization
 const (
-	KeyPrefixDevice  = "device:"
-	KeyPrefixSession = "session:"
-	KeyPrefixMetric  = "metric:"
-	KeyPrefixGeo     = "geo:"
+	KeyPrefixDevice = "device:"
 )
