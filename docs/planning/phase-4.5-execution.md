@@ -298,7 +298,7 @@ migration adds a `LINESTRING`; `grep -rni 'linestring\|polyline\|ST_LineLocatePo
 records the two defects it would fix as "FIXED in Phase 4.5". Unblocking needs four separate
 pieces: a `006` migration adding the column, a persistence path, `TripWithLocation.RouteID`
 (which means touching `trips.go`, scoped out by §5.5), and a seed backfill (which means a new
-migration, since `004` must not be edited). See `docs/phase-4.5-execution.md`.
+migration, since `004` must not be edited). See `docs/planning/phase-4.5-execution.md`.
 
 **D42 — the OSRM road-snapped polyline is computed on every route creation and discarded.**
 `frontend/src/services/api/osrm.ts:16-32` fetches a full GeoJSON LineString from the public
