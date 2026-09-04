@@ -337,4 +337,38 @@ measurement." That figure does not reproduce and was never achievable. It propag
 the Phase 2 report as an inherited baseline before being caught. Same failure class as this
 project's citation errors, in a number rather than a line reference.
 
+## From Phase 4.5 pre-flight (route-projected distance)
+
+**D41 — `routes` has no geometry column; Phase 4.5 is blocked on it.**
+`migrations/001_create_tables.sql:13-18` defines `routes` as `(id, name, description)`. No
+migration adds a `LINESTRING`; `grep -rni 'linestring\|polyline\|ST_LineLocatePoint'` over
+`backend/` returns nothing. `CLAUDE.md` §6.5 specifies an algorithm requiring
+`ST_LineLocatePoint(route_geom, …)` against a column that does not exist, and §3.5 already
+records the two defects it would fix as "FIXED in Phase 4.5". Unblocking needs four separate
+pieces: a `006` migration adding the column, a persistence path, `TripWithLocation.RouteID`
+(which means touching `trips.go`, scoped out by §5.5), and a seed backfill (which means a new
+migration, since `004` must not be edited). See `docs/phase-4.5-execution.md`.
+
+**D42 — the OSRM road-snapped polyline is computed on every route creation and discarded.**
+`frontend/src/services/api/osrm.ts:16-32` fetches a full GeoJSON LineString from the public
+OSRM demo server; `RouteCreatorMarkers.tsx:45,72-74` holds it in `useState` and renders it;
+`createRoute.ts:12` POSTs only `{name, description, stops[]}` because `CreateRoutePayload`
+has no geometry field. So the exact data Phase 4.5 needs is already being produced, once per
+route creation, and thrown away on unmount. Cheapest possible unblock for D41(b) — but it
+changes the `POST /api/routes` request contract.
+
+**D43 — `Route.pattern` is a frontend ghost field (DEFECT-3 class).**
+`frontend/src/types/domain.ts:38` declares `pattern?: GeoJSON.LineString`, and
+`RoutePolyline.tsx:13-15` maps `route.pattern.coordinates` to render the route path — with
+`MapContainer.tsx:56` mounting `<RoutePolyline />` on every map render. The backend
+`models.Route` (`route.go:3-7`) has no such field and `RouteRepository.GetAll`
+(`routes.go:19`) selects only `id, name, description`, so `pattern` is **always** undefined,
+`getPositions` always returns `[]`, and the component always renders nothing.
+`config/apiConfig.ts:107` and `wsConfig.ts:62` both document a `pattern` field the backend
+never sends. This is the same shape as DEFECT-3 (a UI element with no data behind it) and the
+same shape as D13 (`heading`). Not fixed here — and note that it would be *resolved*, not
+deleted, if D41/D42 were ever done, since persisting the polyline is exactly what would make
+this component work.
+
+
 
