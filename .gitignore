@@ -10,3 +10,17 @@ backend.log
 docs/council/
 docs/explain/raw/
 ponytail-review.md
+
+# Node / Frontend artifacts (recreated from package.json & npm)
+node_modules/
+dist/
+dist-ssr/
+*.tsbuildinfo
+.eslintcache
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.vite/
+
