@@ -22,7 +22,7 @@ export const Sidebar = () => {
 
     return (
         <div className="h-full flex flex-col bg-hud-bg w-80 relative z-[1000] border-r border-hud-border"
-             style={{ boxShadow: '1px 0 8px rgba(0,0,0,0.5), 1px 0 1px rgba(0, 245, 212, 0.05)' }}>
+            style={{ boxShadow: '1px 0 8px rgba(0,0,0,0.5), 1px 0 1px rgba(0, 245, 212, 0.05)' }}>
             {/* Scanline + Noise overlays */}
             <div className="scanline-overlay"></div>
             <div className="noise-overlay"></div>
@@ -33,14 +33,14 @@ export const Sidebar = () => {
                 <div className="flex items-center gap-2 mb-3">
                     <span className={`w-1.5 h-1.5 rounded-full ${isConnected ? 'bg-hud-accent animate-blink' : 'bg-hud-danger'}`}></span>
                     <span className="text-[9px] font-bold tracking-hud-wide uppercase"
-                          style={{ color: isConnected ? '#00f5d4' : '#ff3860' }}>
+                        style={{ color: isConnected ? '#00f5d4' : '#ff3860' }}>
                         {isConnected ? 'TRACKING ACTIVE' : 'SIGNAL LOST'}
                     </span>
                 </div>
 
                 {/* Title */}
                 <h1 className="text-lg font-bold text-hud-accent tracking-hud-wide leading-none mb-1">
-                    LATITUDEX
+                    TRANSIT
                 </h1>
                 <p className="text-[9px] text-hud-text-dim tracking-hud-wide uppercase">
                     LIVE TELEMETRY OPERATIONS
@@ -171,7 +171,7 @@ export const Sidebar = () => {
             {/* ── Footer ── */}
             <div className="relative z-20 px-4 py-2 border-t border-hud-border bg-hud-panel/30">
                 <div className="text-[8px] text-hud-text-dim tracking-hud-wide uppercase text-center">
-                    SYS // LATITUDEX v0.1.0 // {new Date().getFullYear()}
+                    SYS // TRANSIT v0.1.0 // {new Date().getFullYear()}
                 </div>
             </div>
         </div>

@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 /* ═══════════════════════════════════════════════════════
-   LATITUDEX — NASA MISSION CONTROL DESIGN SYSTEM
+   TRANSIT — NASA MISSION CONTROL DESIGN SYSTEM
    ═══════════════════════════════════════════════════════ */
 
 :root {
@@ -30,7 +30,8 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
   height: 100%;
@@ -39,7 +40,9 @@ html, body {
   background-color: var(--hud-bg);
 }
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
@@ -47,13 +50,16 @@ html, body {
 ::-webkit-scrollbar {
   width: 4px;
 }
+
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
   background: var(--hud-accent-dim);
   border-radius: 2px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background: var(--hud-accent);
 }
@@ -112,6 +118,7 @@ html, body {
     transform: translate(-50%, -50%) scale(1);
     opacity: 0.8;
   }
+
   100% {
     transform: translate(-50%, -50%) scale(4);
     opacity: 0;
@@ -138,13 +145,11 @@ html, body {
   inset: 0;
   z-index: 10;
   background:
-    repeating-linear-gradient(
-      0deg,
+    repeating-linear-gradient(0deg,
       transparent,
       transparent 2px,
       rgba(0, 245, 212, 0.012) 2px,
-      rgba(0, 245, 212, 0.012) 4px
-    );
+      rgba(0, 245, 212, 0.012) 4px);
   mix-blend-mode: screen;
 }
 
@@ -152,19 +157,22 @@ html, body {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    180deg,
-    transparent 0%,
-    rgba(0, 245, 212, 0.03) 50%,
-    transparent 100%
-  );
+  background: linear-gradient(180deg,
+      transparent 0%,
+      rgba(0, 245, 212, 0.03) 50%,
+      transparent 100%);
   height: 33%;
   animation: scanline-sweep 8s linear infinite;
 }
 
 @keyframes scanline-sweep {
-  0% { transform: translateY(-100%); }
-  100% { transform: translateY(400%); }
+  0% {
+    transform: translateY(-100%);
+  }
+
+  100% {
+    transform: translateY(400%);
+  }
 }
 
 /* ─── LEAFLET POPUP OVERRIDES ────────────────────────── */
@@ -215,8 +223,13 @@ html, body {
   box-shadow: 0 0 8px rgba(0, 0, 0, 0.4) !important;
 }
 
-.leaflet-tooltip-top::before { border-top-color: rgba(13, 19, 33, 0.92) !important; }
-.leaflet-tooltip-bottom::before { border-bottom-color: rgba(13, 19, 33, 0.92) !important; }
+.leaflet-tooltip-top::before {
+  border-top-color: rgba(13, 19, 33, 0.92) !important;
+}
+
+.leaflet-tooltip-bottom::before {
+  border-bottom-color: rgba(13, 19, 33, 0.92) !important;
+}
 
 /* ─── NOISE TEXTURE OVERLAY ──────────────────────────── */
 .noise-overlay {

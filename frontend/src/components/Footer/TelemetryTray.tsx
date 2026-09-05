@@ -13,7 +13,7 @@ export const TelemetryTray = () => {
 
     // Simulated event log
     const events = [
-        '[SYS] LATITUDEX KERNEL ONLINE',
+        '[SYS] TRANSIT KERNEL ONLINE',
         '[NET] WEBSOCKET SECURE LINK ESTABLISHED',
         '[DAT] ACQUIRING LIVE FLEET TELEMETRY...',
         '[GEO] POSTGIS SPATIAL INDEX READY',
@@ -27,8 +27,8 @@ export const TelemetryTray = () => {
 
     return (
         <div className="h-12 border-t border-hud-border bg-hud-bg flex items-center px-4 relative z-[2000] shrink-0"
-             style={{ boxShadow: '0 -2px 10px rgba(0,0,0,0.5)' }}>
-            
+            style={{ boxShadow: '0 -2px 10px rgba(0,0,0,0.5)' }}>
+
             <div className="scanline-overlay"></div>
 
             {/* Left: System Status */}
@@ -69,7 +69,7 @@ export const TelemetryTray = () => {
                         {isConnected ? (Math.random() * 2 + 1).toFixed(2) + ' KB/S' : '0.00 KB/S'}
                     </span>
                 </div>
-                
+
                 <div className="flex flex-col justify-center items-end min-w-[100px]">
                     <span className="text-[8px] text-hud-text-dim tracking-wide uppercase">GLOBAL.TIME [UTC]</span>
                     <span className="text-[12px] font-bold text-hud-text-bright tracking-wider font-mono">
