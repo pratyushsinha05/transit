@@ -34,7 +34,7 @@ without trip lifecycle management, routing-grade ETAs, or client SDKs.*
 | Config | `godotenv` | Defaults in `infra/docker-compose.yml` |
 | Local orchestration | Docker Compose | `transit-network` bridge |
 
-Container images: `timescale/timescaledb-ha:pg15-latest` (`infra/docker-compose.yml:13`) and
+Container images: `timescale/timescaledb-ha:pg15` (`infra/docker-compose.yml:13`) and
 `redis:7-alpine` (`:37`), the latter capped at 256 MB with an LRU eviction policy.
 
 ### 1.1 Outbound network calls

@@ -3,7 +3,7 @@
   "nodes": [
     {
       "id": "postgres",
-      "label": "postgres\ntimescale/timescaledb-ha:pg15-latest",
+      "label": "postgres\ntimescale/timescaledb-ha:pg15",
       "style": "rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;",
       "width": 160,
       "height": 60

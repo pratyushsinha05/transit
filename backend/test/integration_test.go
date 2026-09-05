@@ -48,7 +48,7 @@ import (
 // Image tags must match infra/docker-compose.yml exactly -- this test proves
 // the stack that actually runs, not a substitute.
 const (
-	postgresImage = "timescale/timescaledb-ha:pg15-latest"
+	postgresImage = "timescale/timescaledb-ha:pg15"
 	redisImage    = "redis:7-alpine"
 
 	dbName = "transit_poc"
@@ -442,12 +442,10 @@ func TestIntegration_LocationIngestToWebSocketBroadcast(t *testing.T) {
 }
 
 // startPostgres starts the real production Postgres image
-// (timescale/timescaledb-ha:pg15-latest, matching infra/docker-compose.yml)
+// (timescale/timescaledb-ha:pg15, matching infra/docker-compose.yml)
 // with a deterministic two-part wait strategy: the image restarts itself
 // once during init, so "ready to accept connections" must be matched twice
-// before the port is actually serving. 120s startup timeout accounts for
-// this image running under emulation on arm64 hosts, where the manifest is
-// amd64-only.
+// before the port is actually serving.
 func startPostgres(ctx context.Context) (*tcpostgres.PostgresContainer, error) {
 	pgWait := wait.ForAll(
 		wait.ForLog("database system is ready to accept connections").WithOccurrence(2),
