@@ -87,19 +87,19 @@ Anything stronger is not.
 
 ---
 
-## 2. Current phase and phase gates
+## 2. Phase history and gate protocol
 
-**Current phase: Phase 0 → Phase 4.5 (code cleanup). Infrastructure work is deferred.**
+**Phases 0–3 are done. Phase 4 has not started. Phase 4.5 is blocked. Phase 5+ is deferred.**
 
-| Phase | Goal | Est. | Gate to pass |
-|---|---|---|---|
-| **0** | Ground truth | 2h | **DONE.** `v0-poc` tagged at `1f85187`; `BASELINE.md` records real coverage; `Device` collision resolved (§6) |
-| **1** | Close every open defect in §4 | 1.5d | DEFECT-1 through 7 all closed; tests green; `go build ./...` and `npm run build` clean |
-| **2** | Domain rename | 1d | No `Bus`/`Buses`/`Stop`/`Arrival` identifiers in `backend/internal/` or `backend/pkg/`; zero behavior change |
-| **3** | Tests off zero | 2d | Targets in §8.1 met; one integration test passes |
-| **4** | Geofence events | 2d | Four event types emitted; `GeofenceService` is on the request path |
-| **4.5** | Route-projected distance | 1d | ETA uses along-route distance; no ETA shown for a device past the zone |
-| **5+** | Infrastructure | — | **Not started. Do not begin without explicit instruction.** |
+| Phase | Goal | Outcome |
+|---|---|---|
+| **0** | Ground truth | **DONE.** Real coverage recorded; `Device` collision resolved — no `type Bus` exists, so there was none |
+| **1** | Close every open defect in §4 | **DONE.** DEFECT-1 through 7 closed; see `AUDIT.md` §3 for the full record |
+| **2** | Domain rename | **DONE.** Four commits, zero behavior change. Identifiers are generic; HTTP paths and JSON tags kept as wire contract |
+| **3** | Tests off zero | **PARTIAL.** `services` and `hub` cleared their targets; `handlers` did not, and four packages remain at 0% — see §8.1 |
+| **4** | Geofence events | **NOT STARTED.** Six functions are tagged `Phase4Reserved` in source for this work |
+| **4.5** | Route-projected distance | **BLOCKED.** The `routes` table has no geometry column — see §6.5 and `AUDIT.md` §8 |
+| **5+** | Infrastructure | **Not started. Do not begin without explicit instruction.** |
 
 **Gate protocol.** At the end of every phase:
 
@@ -243,166 +243,46 @@ DEFECT-1 was closed.
 
 | Assumption | Status |
 |---|---|
-| Straight-line distance ≈ travel distance | **FIXED in Phase 4.5** via `ST_LineLocatePoint` |
-| Proximity ⇒ approaching | **FIXED in Phase 4.5** — along-route fraction gives direction |
-| Instantaneous speed predicts the next few minutes | **Accepted limitation.** Document honestly in README. Do not fix. |
-| Stopped ⇒ 20 km/h `DefaultSpeed` | **Accepted limitation.** Document honestly in README. Do not fix. |
+| Straight-line distance ≈ travel distance | **OPEN — blocked.** Route-projected distance requires a route polyline; `routes` has no geometry column (`IDEAS.md` D41). Was previously recorded here as "FIXED in Phase 4.5"; that was wrong |
+| Proximity ⇒ approaching | **OPEN — blocked**, same root cause and same correction |
+| Instantaneous speed predicts the next few minutes | **Accepted limitation.** Document honestly in README. Do not fix |
+| Stopped ⇒ 20 km/h `DefaultSpeed` | **Accepted limitation.** Document honestly in README. Do not fix |
 
-The two accepted limitations are POC-appropriate trade-offs, not bugs. Stating them plainly
-in the README is stronger than hiding them.
+The two accepted limitations are POC-appropriate trade-offs, not bugs. The two blocked ones
+are not fixed and must not be described as fixed — that error is recorded in `AUDIT.md` §8.
 
 ---
 
-## 4. Known defects
+## 4. Defects
 
-DEFECT-1 through 4 came from the self-directed adversarial audit and are **pre-diagnosed** —
-execution, not investigation. DEFECT-5, 6, 7 were added when Phase 0 recon and the
-WebSocket-envelope work surfaced them. All are Phase 1 scope.
+**The full record — what each defect was, why it was missed, and what the fix cost — is in
+`AUDIT.md` §3.** It is kept there rather than here because it is evidence, not a working
+rule. Nothing was summarized away in the move; the postmortems are intact.
 
-### DEFECT-1: Handler bypasses service (architectural) — CLOSED at `5ab7448` (incomplete) → fully closed in the commit below
+| Defect | Status |
+|---|---|
+| DEFECT-1 — handler bypasses service | **CLOSED** at `5ab7448` (incomplete) → `fe918e0`. Was five handlers, not one |
+| DEFECT-2 — WebSocket contract mismatch | **CLOSED.** Canonical envelope in §7.2 |
+| DEFECT-3 — ghost UI (H3 grid toggle) | **CLOSED** at `066b129` |
+| DEFECT-4 — test coverage | **OPEN.** See below |
+| DEFECT-5 — `omitempty` drops zero values | **CLOSED.** Same commit as DEFECT-2 |
+| DEFECT-6 — hub has no shutdown path | **CLOSED**, then extended by D28 (drain before close) |
+| DEFECT-7 — migrations apply twice | **CLOSED.** The compose-level double-apply was later removed outright (D45) |
 
-- **Where:** turned out to be **five** handlers, not one:
-  `backend/internal/handlers/arrivals.go`, `stops.go`, `location.go`, `routes.go` (each held
-  a concrete `*database.X` repository) and `nearby.go` (held a concrete
-  `*services.GeofencingService` instead of an interface).
-- **What:** `ArrivalsService` was constructed in `backend/cmd/server/main.go` and then
-  **ignored**; the arrivals handler reached directly into repositories and recomputed raw
-  math itself. The other four handlers had never gone through a service at all.
-- **Consequence:** the k-ring approach-detection logic never executed. Dead code in the
-  binary. The Clean Architecture the repo advertised was not the architecture it ran.
-- **Fix:** every handler takes a service interface, declared in `handlers` (the consumer
-  package). Every service that touched a repository directly now takes a repository
-  interface, declared in `services`. Compile-time assertions live in `backend/cmd/server/main.go` —
-  the one place allowed to import both an interface's package and its concrete
-  implementation's package without inverting the layering.
-- **The `5ab7448` closure was incomplete.** `backend/internal/services/interfaces.go`
-  imported `transit-backend/internal/database` and declared
-  `TripRepository.GetActiveTripsBeforeStop` as returning `[]database.TripWithLocation` until
-  this commit. That inverts the dependency the interface exists to break: only
-  `database.TripRepository` could satisfy an interface the **services** package declares, so a
-  mock, a test fake, or any alternative backend would have had to import `database` to comply.
-  Every other method in that file already used `models.*`. Fixed by moving `TripWithLocation`
-  to `backend/internal/models/trip.go`. The SQL and `rows.Scan` in
-  `backend/internal/database/trips.go` are byte-for-byte unchanged — this is a type-location
-  change, not a behavior change.
-- **Verify:**
+### DEFECT-4 — test coverage (open)
 
-  ```
-  cd backend
-  grep -rn "internal/database" internal/handlers/ internal/services/
-  ```
-
-  returns nothing. The previous verify was `grep -rn "database\." backend/internal/handlers/`
-  — **handlers-only, and therefore too narrow.** It tested one symptom of the defect rather
-  than the layering rule itself, so it could not detect the services-layer violation and
-  reported the defect closed while it was still live.
-
-### DEFECT-2: WebSocket contract mismatch
-
-- **Where:** `backend/internal/hub/message.go` `Message` struct vs
-  `frontend/src/services/websocket/messageHandler.ts` and `frontend/src/types/domain.ts`
-- **What:** three envelopes were in play, not two — the backend's flat struct, the
-  frontend's `bus_id`/`last_updated` expectation, and the (wrong) nested shape this file
-  once declared. The committed frontend also used a lowercase `'location_update'` type
-  literal against the Go const `"LOCATION_UPDATE"`, so **no location message was ever
-  processed**; `handleMessage` fell through to `default:`.
-- **Fix:** the canonical envelope in §7.2. Flat. `route_id` and `h3_hex` added backend-side.
-- **Verify:** a test asserts the serialized JSON shape; the frontend type mirrors it.
-
-### DEFECT-3: Ghost UI — CLOSED at `066b129`
-
-- **Where:** an "H3 Spatial Grid" toggle in
-  `frontend/src/components/Sidebar/OperationsPanel.tsx`, against
-  `frontend/src/components/Map/MapContainer.tsx`, which read no layer state at all.
-- **What:** the toggle toggled nothing. No grid layer existed. `frontend/src/utils/h3Helpers.ts`
-  was independently dead — zero call sites, and all three exports operated on `bus.h3Hex`,
-  which the backend did not send at the time.
-- **Fix as applied:** the toggle, the `grid` key in `store/slices/ui.ts`, and `h3Helpers.ts`
-  were all deleted. The grid layer was **not** implemented to justify the toggle — that would
-  have been scope inflation.
-- **Verify:** `grep -rn "grid" frontend/src/store/slices/ui.ts` returns nothing;
-  `frontend/src/utils/` is empty; `OperationsPanel.tsx` has exactly two layer toggles,
-  `stops` and `buses`.
-- **Process note.** This section described work already done for three review rounds, and its
-  staleness was reported three separate times — Pass 1 §7.2(f), the Sections 6–7 checker, and
-  the first citation gate — before anyone acted on it. Its old citations
-  (`OperationsPanel.tsx:59-68`, `ui.ts` lines 36/38/61) had by then drifted onto unrelated
-  code. **A finding reported three times and never actioned is its own failure**, distinct
-  from the defect it describes.
-
-### DEFECT-4: Test coverage
-
-- **Baseline:** `pkg/geo` 100%; `internal/services` 6.9%; everything else 0%. No
-  integration tests.
-- **Fix:** Phase 3. Targets in §8.1.
-
-### DEFECT-5: `omitempty` drops legitimate zero values
-
-- **Where:** `backend/internal/hub/message.go`.
-- **What:** every numeric field tagged `omitempty`. A stopped device — the most common real
-  state — serialized with no `speed` key, and the frontend's
-  `parseFloat(raw[schema.speed] || 0)` could not distinguish "stopped" from "not reported".
-  `latitude`/`longitude`/`accuracy` had the same hazard at exactly `0`.
-- **Fix:** remove `omitempty` from every numeric field. Same commit as DEFECT-2, since the
-  serialization test would otherwise encode the bug.
-- **Verify:** the test asserts `speed` is present and `0`, not absent.
-
-### DEFECT-6: Hub has no shutdown path
-
-- **Where:** `backend/internal/hub/hub.go` `Hub.Run()`.
-- **What:** unbounded `for { select {...} }` over three channels with no `done`/`ctx` case,
-  started fire-and-forget at `backend/cmd/server/main.go` (`go wsHub.Run()`). Client goroutines in
-  `handlers/websocket.go:41-42` are likewise fire-and-forget. Graceful shutdown only calls
-  `e.Shutdown`.
-- **Consequence:** contradicts §7.1 directly. Also blocks the Phase 3 slow-consumer and
-  disconnect-mid-broadcast tests — and `hub.go:42-49`, the `default:` branch that silently
-  drops on a full client buffer, is exactly the behavior those tests must pin down.
-- **Fix:** `Hub.Run(ctx)` + `Shutdown()`, wired into graceful shutdown. Own commit.
-
-### DEFECT-7: Migrations apply twice on a fresh volume — CLOSED in the commit below
-
-- **Where:** `infra/docker-compose.yml:23` mounts `../backend/migrations` into
-  `/docker-entrypoint-initdb.d`, so Postgres runs every `.sql` at first init. The Go binary
-  then replays all four through its own `schema_migrations` ledger (`database/db.go:57`),
-  which starts empty.
-- **What:** 001–003 are idempotent (`IF NOT EXISTS`, guarded `DO $$`). `004_seed_data.sql`
-  is not — its three `INSERT INTO location_history` statements have no `ON CONFLICT`, so
-  **seed pings are duplicated**. Routes, stops, devices, and trips do use `ON CONFLICT`.
-- **Why this is Phase 1, not later:** duplicated rows in `location_history` corrupt every
-  number Phase 3 and §9 will report.
-- **The `ON CONFLICT DO NOTHING` fix this section used to prescribe does not work.** It was
-  written without checking the schema, and it fails for two independent reasons:
-  1. **There is nothing to conflict against.** `location_history` has no `PRIMARY KEY`, no
-     `UNIQUE` constraint, and no `ADD CONSTRAINT` in any migration; all five of its indexes
-     are plain `CREATE INDEX`, and `create_hypertable` adds none. Bare
-     `ON CONFLICT DO NOTHING` is *syntactically legal* on such a table — that is the trap. It
-     compiles, the migration runs green, and it silently never fires. The targeted form
-     `ON CONFLICT (time, device_id)` instead fails outright with *"no unique or exclusion
-     constraint matching the ON CONFLICT specification"*.
-  2. **Adding a constraint would not have helped either.** Every seed row's timestamp is
-     `NOW() - INTERVAL 'N minutes'`, evaluated per apply. Postgres init runs at T₀, the Go
-     binary replays at T₁, and the same logical ping lands at `T₀−5min` then `T₁−5min` — a
-     different key. No constraint can deduplicate rows whose identity changes between
-     applies. Note also that TimescaleDB requires a unique index on a hypertable to include
-     the partitioning column, so `time` must appear in any future key. Tracked as D18 in
-     `IDEAS.md`.
-- **Fix as applied:** wrap only the three `location_history` inserts in
-  `DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM location_history) THEN ... END IF; END $$;`. This
-  is idempotent without touching the schema or the timestamp semantics. The six inserts that
-  already carry `ON CONFLICT` (devices, routes, three stops, trips) are unchanged — they have
-  real primary keys and work. The double-apply itself is **not** restructured; that remains an
-  infrastructure concern for Phase 5+.
-- **Verify:** `docker compose -f infra/docker-compose.yml down -v && up -d`, wait for the Go
-  binary to replay its ledger, then `SELECT count(*) FROM location_history;` returns **11**
-  (5 + 3 + 3), not 22. A `go build` alone does not test this and must not be reported as if
-  it did.
+The only defect in this section still open. `internal/handlers` sits at 12.7% against a 50%
+target, and `internal/cache`, `internal/config`, `internal/middleware` and `cmd/server` are
+at 0.0%, against a hard rule in §8.1 that no package sits at 0% except the composition root.
+Current numbers and targets are in §8.1.
 
 ### Tracked but not scheduled
 
 `D4` (H3_RESOLUTION / LOG_LEVEL / REDIS_POOL_SIZE dead config), `D8` (`GET /api/stops`
-hard-requires `route_id`; `StopRepository.GetAll` is written and unreachable), `D10` (dead
-structs `models.Device`, `models.Trip`), `D12` (dead `handleArrivalUpdate` WS path). All in
-`IDEAS.md`. Each needs a scope decision; none blocks Phase 1.
+hard-requires `route_id`; `ZoneRepository.GetAll` is written and unreachable), `D15`
+(`GetActiveTripsBeforeZone` never scopes by route), `D48` (`GET /api/nearby/devices` returns
+500 — pgx cannot encode an int for `$2 || ' minutes'`). All in `IDEAS.md`, which is the live
+findings log. Each needs a scope decision.
 
 ---
 
@@ -460,91 +340,38 @@ touches them.
 
 ---
 
-## 6. Domain rename (Phase 2)
+## 6. Domain rename (Phase 2) — shipped
 
-> **The `Device` collision was RESOLVED in Phase 0. There is none.**
-> `grep -rn "type .*Bus"` finds only `models.NearbyBus` — **no `type Bus` exists**, so
-> nothing collides with `models.Device`. `models.Device` is a three-field device-roster
-> struct with **zero references** anywhere in the codebase, mirroring the live `devices`
-> table (which is joined in raw SQL at `database/locations.go:89,128,170` and
-> `database/trips.go:28`, scanning into other types).
->
-> **All four of those citations were wrong until the first citation gate ran.** They were
-> written from an audit document, not from the code, and were already wrong at `v0-poc` —
-> `locations.go:78` is a comment, `:113` a doc comment, `:158` the `SELECT DISTINCT ON`
-> header, off by 11, 15 and 12 lines. `trips.go:34` was off by one when written and drifted
-> to a 6-line error when `fe918e0` removed `TripWithLocation` from that file, leaving it
-> pointing at `LIMIT 1`.
+The rename is **done**, in four commits with zero behavior change. The full identifier tables
+are in git history; they are a record of completed work, not instructions. What remains
+binding from that phase:
+
+> **The `Device` collision was RESOLVED in Phase 0. There is none.** `grep -rn "type .*Bus"`
+> finds no `type Bus`, so nothing collides with `models.Device`.
 >
 > **Decision: keep `models.Device` unchanged.** Do not rename into it. Do not delete it —
 > Phase 4's `stale` event needs a device roster to know which devices should be reporting.
 
-The repo's identity is a generic telemetry engine with a transit demo skin. Core types must
-be generic; only the demo layer may be transit-flavoured.
-
-### 6.1 Go — the real identifiers
-
-`Bus` appears only as a qualifier inside names, never as a type:
-
-| Current | Rename to | Where |
-|---|---|---|
-| `models.NearbyBus` | `models.NearbyDevice` | `internal/models/location.go:27` |
-| `GetBusesInHex` | `GetDevicesInHex` | `internal/database/locations.go` |
-| `GetBusesInHexes` | `GetDevicesInHexes` | `internal/database/locations.go` |
-| `GetBusesNearStop` | `GetDevicesNearZone` | `internal/database/locations.go` |
-| `FindNearbyBuses` | `FindNearbyDevices` | `internal/services/geofencing.go` |
-| `NearbyBusesTTL` | `NearbyDevicesTTL` | `internal/cache/` |
-| `busLat` / `busLng` / `busHex` | `deviceLat` / `deviceLng` / `deviceHex` | locals, various |
-| `models.Stop` | `models.Zone` | `internal/models/stop.go` → `zone.go` |
-| `StopRepository` | `ZoneRepository` | `internal/database/stops.go` → `zones.go` |
-| `StopHandler` | `ZoneHandler` | `internal/handlers/stops.go` → `zones.go` |
-| `models.ArrivalEvent` | `models.GeofenceEvent` | `internal/models/trip.go` |
-| `ArrivalsService` | `GeofenceService` | `internal/services/arrivals.go` → `geofence.go` |
-| `ArrivalHandler` | `GeofenceHandler` | `internal/handlers/arrivals.go` → `geofence.go` |
-| `models.Device` | *(unchanged)* | keep as-is |
-| `Route` | *(unchanged)* | a polyline is already generic |
-| `location_history` | *(unchanged)* | already generic |
-
-### 6.2 Frontend
-
-| Current | Rename to |
-|---|---|
-| `Map/BusMarkers.tsx` | `Map/DeviceMarkers.tsx` |
-| `Map/StopMarkers.tsx` | `Map/ZoneMarkers.tsx` |
-| `Sidebar/ArrivalCard.tsx` | `Sidebar/GeofenceEventCard.tsx` |
-| `Sidebar/ArrivalsList.tsx` | `Sidebar/GeofenceEventList.tsx` |
-| `Sidebar/StopDetails.tsx` | `Sidebar/ZoneDetails.tsx` |
-| `store/slices/busLocations.ts` | `store/slices/devices.ts` |
-| `store/slices/arrivals.ts` | `store/slices/geofenceEvents.ts` |
-| `store/slices/stops.ts` | `store/slices/zones.ts` |
-| `hooks/useStops.ts` | `hooks/useZones.ts` |
-| `hooks/useArrivals.ts` | `hooks/useGeofenceEvents.ts` |
-| `services/api/stops.ts` | `services/api/zones.ts` |
-| `services/api/arrivals.ts` | `services/api/geofenceEvents.ts` |
-| `types/domain.ts` `BusLocation` | `DeviceLocation` |
-| `layerVisibility.buses` / `.stops` | `.devices` / `.zones` |
-
-### 6.3 Rules for this phase
-
-- Mechanical rename only. **Zero behavior change.** If a test's assertions change, something
-  is wrong.
-- Four commits: (1) Go models + database, (2) Go services + handlers, (3) SQL migration,
-  (4) frontend. Verify the build between each.
-- **Never edit an existing migration.** Add `migrations/006_rename_stops_zones.sql`
-  (005 is taken by the DEFECT-2 work if it created one — check first).
-- Use `gopls`-aware rename. **Never blind `sed -i`** across the tree — it hits strings,
+- Core identifiers are generic; the demo layer may stay transit-flavoured. Transit vocabulary
+  is permitted **only** in `migrations/004_seed_data.sql`, demo fixtures, and user-facing UI
+  copy.
+- **HTTP route paths, query parameters and JSON struct tags were deliberately NOT renamed.**
+  They are wire contract; renaming them would be a behavior change. This is why
+  `GET /api/stops` is served by `ZoneHandler.GetZones`.
+- **Never edit an existing migration.** The rename shipped as `005_rename_stops_zones.sql`.
+- Use a type-aware rename tool. **Never blind `sed -i`** across the tree — it hits strings,
   comments, and seed data.
-- Transit vocabulary is permitted **only** in `migrations/004_seed_data.sql`, demo fixtures,
-  and user-facing UI copy.
-- **Verify:** `grep -rn "Bus\|Buses\|Stop\|Arrival" backend/internal backend/pkg
-  --include=*.go` returns only comments and seed references.
 
 ---
 
-## 6.5 Phase 4.5 — Route-projected distance
+## 6.5 Phase 4.5 — route-projected distance (BLOCKED)
 
-The one deliberate exception to §5.1. Replaces straight-line ETA distance with along-route
-distance using PostGIS already in the stack.
+The one deliberate exception to §5.1, specified but **not executable as written**: it requires
+projecting a device and a zone onto a route polyline, and **`routes` has no geometry column**
+in any migration. `ST_LineLocatePoint` has nothing to project onto. See `AUDIT.md` §8 and
+`IDEAS.md` D41–D43.
+
+The intended algorithm, kept for whenever the data exists:
 
 1. Project device position onto its route polyline: `ST_LineLocatePoint` → fraction 0–1
 2. Project the zone onto the same polyline → fraction 0–1
@@ -552,13 +379,20 @@ distance using PostGIS already in the stack.
 4. If device fraction > zone fraction, the device has **passed**. Emit **no ETA**. Do not
    emit a large one.
 
-**Rules:**
+**Rules that still bind if it is ever unblocked:**
 
-- No new dependencies. PostGIS is already running.
+- `ST_Length` on a `geometry` in SRID 4326 returns **degrees**. Cast the result of
+  `ST_LineSubstring` to `::geography` for metres — not its inputs; `ST_LineLocatePoint` and
+  `ST_LineSubstring` both take `geometry`.
 - Devices with no assigned route fall back to Haversine. Keep that path working and tested.
 - Test the passed-the-zone case explicitly — it is the failure this phase exists to kill.
 - The ETA **time model is unchanged**: still `distance / speed`. Only distance improves.
   Do not touch `DefaultSpeed` here.
+
+**Unblocking needs four pieces before the algorithm is even reachable:** a migration adding
+the column, a persistence path (the OSRM polyline is already computed browser-side and
+discarded — D42), widening `TripWithLocation` with `RouteID`, and a seed backfill. Two of
+those cross existing scope guards. The one-day estimate was written against an assumed schema.
 
 ---
 
@@ -700,22 +534,26 @@ is also a bug. Adding one to `.env.example` alone — category (b) — is both.
 
 ## 8. Testing
 
-### 8.1 Targets (Phase 3 exit criteria)
+### 8.1 Targets and current state
 
-| Package | Baseline | Target |
-|---|---|---|
-| `backend/pkg/geo` | 100% | Keep ≥ 95% |
-| `backend/internal/services` | 6.9% | ≥ 60% |
-| `backend/internal/handlers` | 0% | ≥ 50% |
-| `backend/internal/hub` | 0% | ≥ 50% |
-| `backend/internal/database` | 0% | Covered by integration test |
-| `backend/internal/config` | 0% | ≥ 40% |
-| `backend/internal/middleware` | 0% | ≥ 40% |
-| `backend/internal/cache` | 0% | Covered by integration test |
-| `backend/cmd/server` | 0% | **Exempt** — composition root, wiring only |
+| Package | Baseline | Current | Target | Met? |
+|---|---|---|---|---|
+| `backend/pkg/geo` | 100.0% | **100.0%** | Keep ≥ 95% | ✅ |
+| `backend/internal/services` | 6.9% | **95.0%** | ≥ 60% | ✅ |
+| `backend/internal/hub` | 0.0% | **86.1%** | ≥ 50% | ✅ |
+| `backend/internal/handlers` | 0.0% | **12.7%** | ≥ 50% | ❌ |
+| `backend/internal/database` | 0.0% | 0.0% | Covered by integration test | only under `-tags=integration` |
+| `backend/internal/cache` | 0.0% | 0.0% | Covered by integration test | only under `-tags=integration` |
+| `backend/internal/config` | 0.0% | 0.0% | ≥ 40% | ❌ |
+| `backend/internal/middleware` | 0.0% | 0.0% | ≥ 40% | ❌ |
+| `backend/cmd/server` | 0.0% | 0.0% | **Exempt** — composition root | — |
 
-**Hard rule: no package sits at 0%**, except `cmd/server`, exempted above because it has no
-logic to unit-test; everything it does is exercised by the integration test.
+**`internal/hub` coverage is nondeterministic** — it has been observed at both 86.1% and
+87.3% across consecutive runs. **Any gate on it must use the observed minimum.** Gating at
+87% would fail four runs in five (`IDEAS.md` D40).
+
+**Hard rule: no package sits at 0%**, except `cmd/server`. **This rule is currently not met**
+— four packages are at zero. Stated plainly rather than softened.
 
 ### 8.2 What to test
 
@@ -761,15 +599,20 @@ corrupt the baseline.
 
 ## 10. Operations (as-built)
 
-- `./deploy.sh` — verifies prerequisites, `docker-compose` up (Postgres, Redis, Go backend),
-  builds the Vite frontend, serves preview on port 4173
+- `./deploy.sh` — verifies prerequisites, brings the backend stack up via the Makefile,
+  builds the Vite frontend, serves a preview
 - `./cleanup.sh` — tears everything down, destroys volumes and `node_modules`
-- `make build` — compile `backend/cmd/server/main.go`
-- `make docker-up` — build and boot the backend stack
-- `make rebuild-backend` — hot-swap the API container without restarting Postgres/Redis
-- `make test-unit` — Go unit tests
+- The `Makefile` is the command registry and holds far more than the handful once listed
+  here. `make help` is the authoritative list; `README.md` documents the commonly used
+  subset (`build`, `check-deps`, `docker-up`, `docker-health`, `docker-down`, `docker-clean`,
+  `docker-logs`, `db-migrate`, `db-seed`, `rebuild-backend`, `test-unit`, `test-integration`)
+- `make test-integration` requires Docker and passes `-tags=integration`; without the tag the
+  build-tagged integration test is skipped silently and the target reports a false pass
+  (`IDEAS.md` D46)
+- `main.go` is the **single authority** for schema migrations. The compose file no longer
+  mounts migrations into Postgres's init path (`IDEAS.md` D45)
 
-Any new Make target must be documented here in the same commit.
+Any new Make target must be documented in `README.md` in the same commit.
 
 ---
 
@@ -838,21 +681,18 @@ pressure.
 
 ---
 
-## 13. Deliverables this repo owes
+## 13. The five documents
 
-| File | Contents | Status |
-|---|---|---|
-| `BASELINE.md` | Coverage and behavior at `v0-poc` | **DONE** — Phase 0 |
-| `IDEAS.md` | Deferred items, each with the reason | **DONE**, ongoing |
-| `CLAUDE.md` | This file, kept true | ongoing |
-| `docs/explain/` | Plain-English architecture docs + diagrams | separate pass |
-| `RESULTS.md` | Measured numbers against §9 | after 4.5 |
-| `README.md` | §1.4 framing, honest limitations from §3.5, results | after 4.5 |
-| `AUDIT.md` | The self-directed adversarial audit write-up | after 4.5 |
+| File | Contents |
+|---|---|
+| `README.md` | §1.4 framing, quickstart, measured numbers, honest limitations from §3.5 |
+| `ARCHITECTURE.md` | System design: the ping's path, components, spatial model, concurrency, glossary |
+| `AUDIT.md` | The self-directed adversarial audit and the full defect record |
+| `CLAUDE.md` | This file — the working contract, kept true |
+| `IDEAS.md` | The findings log: deferred items, each with the reason |
 
 `AUDIT.md` is the most differentiated artifact in this repo. Most engineers cannot show a
 case where they found their own architecture lying, twice, including in their own spec. Do
 not let it get lost in a rewrite.
 
-**Housekeeping:** done at `eddb097` — `graphify.html`, `tree.txt`, and
-`frontend_features_prompt.md` deleted; `repo-analysis/` moved.
+Diagrams live in `docs/diagrams/` and are embedded from `ARCHITECTURE.md`.
