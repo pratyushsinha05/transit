@@ -1,32 +1,9 @@
-# Compiled binaries and build artifacts
-/server
-/backend/server
-bin/
-*.exe
-*.test
-
-# Environment and credentials
-.env
-.env*.local
-!.env.example
-
-# Test and coverage artifacts
-*.out
-coverage.html
-coverage/
-
-# Editor and OS artifacts
-.DS_Store
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# Runtime logs and process IDs
-backend.log
-*.pid
 __pycache__/
 *.pyc
+.env
+backend.log
+*.pid
+/server
 
 # Session scratch — never commit
 .claude-flow/
