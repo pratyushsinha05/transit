@@ -34,6 +34,16 @@ file and line.** When in doubt, read the code — never another document.
 
 ---
 
+## 0.1 A note on citations to documents that no longer exist
+
+Several sections below cite `BASELINE.md`, `RESULTS.md`, `docs/audit/*` or `docs/explain/*`.
+Those files were consolidated into `AUDIT.md`, `README.md` and `ARCHITECTURE.md`. The
+citations are left as written because they are **historical evidence** — they record which
+document made which claim at the time, which is the whole point of §12's anti-goals and of
+`AUDIT.md`. Read them as "the document then named X", not as a live path.
+
+---
+
 ## 1. Mission
 
 ### 1.1 What this repo is
@@ -591,7 +601,7 @@ Not aspirational — these define what the eventual results table reports.
 | Redis hot-read | < 5ms p99 |
 | Memory | Stable under 1-hour sustained load — no growth trend |
 
-Nothing here is claimed publicly until measured. Measured numbers go in `RESULTS.md`.
+Nothing here is claimed publicly until measured. Measured numbers go in `README.md`.
 **DEFECT-7 must be closed before any of these are measured** — duplicated seed rows would
 corrupt the baseline.
 

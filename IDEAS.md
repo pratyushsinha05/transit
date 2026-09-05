@@ -30,7 +30,7 @@ not started until Phases 0–4.5 pass their gates.
 
 ---
 
-## From BASELINE.md — defects found, not fixed in Phase 1
+## From Phase 0 ground truth — defects found, not fixed in Phase 1
 
 **D4 addendum — `hex_res9` column name vs. configurable resolution.** Phase 1 (C7, deferred
 to Phase 3 per the estimate cut) wires `H3_RESOLUTION` for real. Once it's live, setting
@@ -75,7 +75,7 @@ only place data for it could plausibly come from without adding a sensor input t
 don't have.
 
 **D10 — `models.Trip` is dead code.** Zero references anywhere (confirmed via
-`grep -rn "models\.Trip\b"`). Unlike `models.Device` (kept — see BASELINE.md §2),
+`grep -rn "models\.Trip\b"`). Unlike `models.Device` (kept — see `AUDIT.md` §3),
 `ArrivalEvent` in the same file is live and would need splitting out first. Low priority;
 revisit during Phase 2 rename since `trip.go` will need eyes anyway if trips ever get
 renamed away from transit vocabulary.
@@ -149,7 +149,7 @@ Phase 4 scope.
 
 **D16 — `models.ArrivalEvent` (`models/trip.go:11`) is dead:** declared, never constructed,
 never returned. The two other grep hits are the substring inside `DetectArrivalEvent`.
-`BASELINE.md` §3.1 wrongly lists it as the `/api/arrivals` response type; that is
+The Phase 0 baseline wrongly listed it as the `/api/arrivals` response type; that is
 `services.ArrivalPrediction`.
 
 **D17 — two files fail `gofmt -l` at HEAD, pre-dating any current work:**
@@ -347,7 +347,7 @@ migration adds a `LINESTRING`; `grep -rni 'linestring\|polyline\|ST_LineLocatePo
 records the two defects it would fix as "FIXED in Phase 4.5". Unblocking needs four separate
 pieces: a `006` migration adding the column, a persistence path, `TripWithLocation.RouteID`
 (which means touching `trips.go`, scoped out by §5.5), and a seed backfill (which means a new
-migration, since `004` must not be edited). See `docs/phase-4.5-execution.md`.
+migration, since `004` must not be edited). See `AUDIT.md` §8.
 
 **D42 — the OSRM road-snapped polyline is computed on every route creation and discarded.**
 `frontend/src/services/api/osrm.ts:16-32` fetches a full GeoJSON LineString from the public
@@ -411,7 +411,7 @@ Per Rule 6, this Go defect is recorded here and NOT fixed in application code du
 
 ## From Dead-Code Verification and Free-List Deletion
 
-**D49 — Free-list deletion pass complete (see docs/deadcode-verification.md §2).**
+**D49 — Free-list deletion pass complete (see `AUDIT.md` §7).**
 Deliberately NOT deleted, each for a recorded reason:
 the six Phase4Reserved-tagged functions (council ruling, tagged in their
 own commit); `ZoneRepository.GetAll` (D8, pending product decision);
